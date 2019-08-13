@@ -21,7 +21,7 @@ public class ArSudokuSolver {
 
     public static void main(String[] args) {
         // load image
-        Mat raw = Imgcodecs.imread("sudoku.jpg", Imgcodecs.IMREAD_ANYCOLOR);
+        Mat raw = Imgcodecs.imread("sudoku3.jpg", Imgcodecs.IMREAD_ANYCOLOR);
         Mat proc = raw.clone();
 
         // pre processing
@@ -47,19 +47,18 @@ public class ArSudokuSolver {
             }
         }
         Imgproc.drawContours(raw, Collections.singletonList(biggestContour), 0, new Scalar(0, 255, 0), 2);
-        Imgproc.rectangle(raw, biggestRect, new Scalar(0, 0, 255), 2);
-
-        HighGui.imshow("res", raw);
-        HighGui.waitKey(0);
+//        Imgproc.rectangle(raw, biggestRect, new Scalar(0, 0, 255), 2);
+        for(Point cur : biggestContour.toArray())
+            System.out.println(cur);
 
         // perspective transform with sudoku contour
-        // get 4 corner point of sudoku contour
         // copy points to point rank and sort
         Point[] points = biggestContour.toArray();
         PointRank[] pointRanks = new PointRank[points.length];
         for (int i = 0; i < pointRanks.length; i++)
             pointRanks[i] = new PointRank(points[i]);
 
+        // get 4 corner point of sudoku contour
         // calculate top left point
         Point topLeft;
         Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.x));
@@ -114,6 +113,26 @@ public class ArSudokuSolver {
         Imgproc.circle(raw, topRight, 10, new Scalar(0, 0, 255), 2);
         Imgproc.circle(raw, bottomLeft, 10, new Scalar(0, 0, 255), 2);
         Imgproc.circle(raw, bottomRight, 10, new Scalar(0, 0, 255), 2);
+
+        // detect line
+        Mat canny = proc.clone();
+        Imgproc.Canny(canny, canny, 100, 100);
+        Mat lines = new Mat();
+        Imgproc.HoughLines(canny, lines, 1, Math.PI / 180, 150);
+        for (int x = 0; x < lines.rows(); x++) {
+            double rho = lines.get(x, 0)[0];
+            double theta = lines.get(x, 0)[1];
+            double a = Math.cos(theta);
+            double b = Math.sin(theta);
+            double x0 = a * rho;
+            double y0 = b * rho;
+            Point pt1 = new Point(Math.round(x0 + 1000 * (-b)), Math.round(y0 + 1000 * (a)));
+            Point pt2 = new Point(Math.round(x0 - 1000 * (-b)), Math.round(y0 - 1000 * (a)));
+//             Imgproc.line(raw, pt1, pt2, new Scalar(255, 0, 0), 2, Imgproc.LINE_AA, 0);
+        }
+
+        HighGui.imshow("res", raw);
+        HighGui.waitKey(0);
 
         // perspective transform with sudoku contour
         Mat before = new MatOfPoint2f(topLeft, topRight, bottomLeft, bottomRight);
