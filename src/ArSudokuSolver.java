@@ -129,12 +129,11 @@ public class ArSudokuSolver {
         Imgproc.circle(raw, bottomRight, 10, new Scalar(0, 0, 255), 2);
 
         // perspective transform with sudoku contour
-        Mat contourPoints = new MatOfPoint2f(topLeft, topRight, bottomLeft, bottomRight);
-        Mat transformedPoints = new MatOfPoint2f(biggestRect.tl(), new Point(biggestRect.br().x, biggestRect.tl().y),
-                new Point(biggestRect.tl().x, biggestRect.br().y), biggestRect.br());
-        Mat perspectiveMatrix = Imgproc.getPerspectiveTransform(contourPoints, transformedPoints);
-        Imgproc.warpPerspective(proc, proc, perspectiveMatrix, proc.size());
-        System.out.println(contourPoints.dump());
+        Mat before = new MatOfPoint2f(topLeft, topRight, bottomLeft, bottomRight);
+        Mat after = new MatOfPoint2f(new Point(0, 0), new Point(proc.cols(), 0),
+                new Point(0, proc.rows()), new Point(proc.cols(), proc.rows()));
+        Mat perspectiveTransformer = Imgproc.getPerspectiveTransform(before, after);
+        Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
 
         HighGui.imshow("res", proc);
         HighGui.waitKey(0);
