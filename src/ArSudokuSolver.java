@@ -29,25 +29,10 @@ public class ArSudokuSolver {
         Imgproc.adaptiveThreshold(proc, proc, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 201, 7);
         Core.bitwise_not(proc, proc);
 
-        // detect line
-        Mat lines = new Mat();
-        Imgproc.HoughLines(proc, lines, 1, Math.PI / 180, 350);
-        for (int x = 0; x < lines.rows(); x++) {
-            double rho = lines.get(x, 0)[0];
-            double theta = lines.get(x, 0)[1];
-            double a = Math.cos(theta);
-            double b = Math.sin(theta);
-            double x0 = a * rho;
-            double y0 = b * rho;
-            Point pt1 = new Point(Math.round(x0 + 1000 * (-b)), Math.round(y0 + 1000 * (a)));
-            Point pt2 = new Point(Math.round(x0 - 1000 * (-b)), Math.round(y0 - 1000 * (a)));
-//            Imgproc.line(proc, pt1, pt2, new Scalar(0, 255, 0), 1, Imgproc.LINE_AA, 0);
-        }
-
         // detect sudoku contour
         // find contours
         List<MatOfPoint> contourList = new ArrayList<>();
-        Imgproc.findContours(proc, contourList, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(proc, contourList, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // find biggest contour
         double maxArea = 0;
@@ -62,11 +47,13 @@ public class ArSudokuSolver {
             }
         }
         Imgproc.drawContours(raw, Collections.singletonList(biggestContour), 0, new Scalar(0, 255, 0), 2);
-//        Imgproc.rectangle(raw, biggestRect, new Scalar(0, 255, 0), 2);
+        Imgproc.rectangle(raw, biggestRect, new Scalar(0, 0, 255), 2);
+
+        HighGui.imshow("res", raw);
+        HighGui.waitKey(0);
 
         // perspective transform with sudoku contour
-        // get 4 edge point of sudoku contour
-
+        // get 4 corner point of sudoku contour
         // copy points to point rank and sort
         Point[] points = biggestContour.toArray();
         PointRank[] pointRanks = new PointRank[points.length];
@@ -136,24 +123,23 @@ public class ArSudokuSolver {
         Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
         Imgproc.resize(proc, proc, new Size(28 * 9, 28 * 9));
 
-        HighGui.imshow("res", proc);
-        HighGui.waitKey(0);
-
         // split mat into 9 * 9
         Mat[] elements = new Mat[9 * 9];
         int offset = proc.rows() / 9;
         int index = 0;
         for (int i = 0; i < 9 * offset; i += offset) {
-            for (int j = 0; j < 9 * offset; j += offset) {
+            for (int j = 0; j < 9 * offset; j += offset)
                 elements[index++] = proc.rowRange(i, i + offset).colRange(j, j + offset);
-            }
         }
 
+        HighGui.imshow("res", proc);
+        HighGui.waitKey(0);
+
         for (Mat cur : elements) {
-//            System.out.println(cur.dump());
             HighGui.imshow("res", cur);
             HighGui.waitKey(0);
         }
+
         HighGui.destroyAllWindows();
     }
 }
