@@ -41,7 +41,7 @@ public class ArSudokuSolver {
             double y0 = b * rho;
             Point pt1 = new Point(Math.round(x0 + 1000 * (-b)), Math.round(y0 + 1000 * (a)));
             Point pt2 = new Point(Math.round(x0 - 1000 * (-b)), Math.round(y0 - 1000 * (a)));
-            // Imgproc.line(raw, pt1, pt2, new Scalar(0, 255, 0), 1, Imgproc.LINE_AA, 0);
+//            Imgproc.line(proc, pt1, pt2, new Scalar(0, 255, 0), 1, Imgproc.LINE_AA, 0);
         }
 
         // detect sudoku contour
@@ -134,8 +134,26 @@ public class ArSudokuSolver {
                 new Point(0, proc.rows()), new Point(proc.cols(), proc.rows()));
         Mat perspectiveTransformer = Imgproc.getPerspectiveTransform(before, after);
         Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
+        Imgproc.resize(proc, proc, new Size(28 * 9, 28 * 9));
 
         HighGui.imshow("res", proc);
         HighGui.waitKey(0);
+
+        // split mat into 9 * 9
+        Mat[] elements = new Mat[9 * 9];
+        int offset = proc.rows() / 9;
+        int index = 0;
+        for (int i = 0; i < 9 * offset; i += offset) {
+            for (int j = 0; j < 9 * offset; j += offset) {
+                elements[index++] = proc.rowRange(i, i + offset).colRange(j, j + offset);
+            }
+        }
+
+        for (Mat cur : elements) {
+//            System.out.println(cur.dump());
+            HighGui.imshow("res", cur);
+            HighGui.waitKey(0);
+        }
+        HighGui.destroyAllWindows();
     }
 }
