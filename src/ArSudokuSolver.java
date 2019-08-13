@@ -15,14 +15,6 @@ public class ArSudokuSolver {
             this.point = point;
         }
 
-        void addRank(int rank) {
-            this.rank += rank;
-        }
-
-        int getRank() {
-            return this.rank;
-        }
-
         int rank = 0;
         Point point;
     }
@@ -81,24 +73,62 @@ public class ArSudokuSolver {
         for (int i = 0; i < pointRanks.length; i++)
             pointRanks[i] = new PointRank(points[i]);
 
+        // calculate top left point
+        Point topLeft;
         Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.x));
         for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].addRank(i + 1);
-
+            pointRanks[i].rank += i + 1;
         Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
         for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].addRank(i + 1);
-
+            pointRanks[i].rank += i + 1;
         Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
+        topLeft = pointRanks[0].point;
 
-        for (int i = 0; i < points.length; i++)
-            points[i] = pointRanks[i].point;
+        //calculate top right point
+        Point topRight;
+        for (int i = 0; i < pointRanks.length; i++)
+            pointRanks[i].rank = 0;
+        Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.x, a.point.x));
+        for (int i = 0; i < pointRanks.length; i++)
+            pointRanks[i].rank += i + 1;
+        Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
+        for (int i = 0; i < pointRanks.length; i++)
+            pointRanks[i].rank += i + 1;
+        Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
+        topRight = pointRanks[0].point;
 
-        for (Point cur : points)
-            System.out.println(cur);
+        //calculate top right point
+        Point bottomLeft;
+        for (int i = 0; i < pointRanks.length; i++)
+            pointRanks[i].rank = 0;
+        Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.x));
+        for (int i = 0; i < pointRanks.length; i++)
+            pointRanks[i].rank += i + 1;
+        Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.y, a.point.y));
+        for (int i = 0; i < pointRanks.length; i++)
+            pointRanks[i].rank += i + 1;
+        Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
+        bottomLeft = pointRanks[0].point;
 
-        Imgproc.circle(raw, points[0], 10, new Scalar(0, 255, 0), 2);
+        //calculate bottom right point
+        Point bottomRight;
+        for (int i = 0; i < pointRanks.length; i++)
+            pointRanks[i].rank = 0;
+        Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.x, a.point.x));
+        for (int i = 0; i < pointRanks.length; i++)
+            pointRanks[i].rank += i + 1;
+        Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.y, a.point.y));
+        for (int i = 0; i < pointRanks.length; i++)
+            pointRanks[i].rank += i + 1;
+        Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
+        bottomRight = pointRanks[0].point;
 
+        Imgproc.circle(raw, topLeft, 10, new Scalar(0, 255, 0), 2);
+        Imgproc.circle(raw, topRight, 10, new Scalar(0, 255, 0), 2);
+        Imgproc.circle(raw, bottomLeft, 10, new Scalar(0, 255, 0), 2);
+        Imgproc.circle(raw, bottomRight, 10, new Scalar(0, 255, 0), 2);
+
+        
 
         HighGui.imshow("res", raw);
         HighGui.waitKey(0);
