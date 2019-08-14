@@ -22,10 +22,11 @@ class SudokuAlgorithmSolver {
             }
         }
 
-        void remoteCandidate(int val) {
-            candidate.remove(new Integer(val));
+        boolean removeCandidate(int val) {
+            boolean res = candidate.remove(new Integer(val));
             if (candidate.size() == 1)
                 this.val = candidate.get(0);
+            return res;
         }
     }
 
@@ -38,13 +39,35 @@ class SudokuAlgorithmSolver {
                 pan[i][j] = new Cell(sc.nextInt());
         }
 
-        for (int i = 0; i < 9; ++i) {
-            for (int j = 0; j < 9; ++j) {
-                for (int cur : getSquare(pan, i, j))
-                    System.out.print(cur);
-                System.out.println();
+        // remove already exist value from candidate
+        while(true) {
+            boolean isCandidateChanged = false;
+            for (int i = 0; i < 9; ++i) {
+                for (int j = 0; j < 9; ++j) {
+                    for (int cur : getExistValue(pan, i, j)) {
+                        if(pan[i][j].removeCandidate(cur))
+                            isCandidateChanged = true;
+                    }
+                }
             }
+            if(!isCandidateChanged)
+                break;
         }
+
+        // print res
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j)
+                System.out.print(pan[i][j].val + " ");
+            System.out.println();
+        }
+    }
+
+    private List<Integer> getExistValue(Cell[][] pan, int row, int col) {
+        List<Integer> existValue = new ArrayList<>();
+        existValue.addAll(getHorizontal(pan, row));
+        existValue.addAll(getVertical(pan, col));
+        existValue.addAll(getSquare(pan, row, col));
+        return existValue;
     }
 
     private List<Integer> getHorizontal(Cell[][] pan, int row) {
