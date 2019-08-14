@@ -39,26 +39,54 @@ class SudokuAlgorithmSolver {
                 pan[i][j] = new Cell(sc.nextInt());
         }
 
-        // remove already exist value from candidate
-        while(true) {
-            boolean isCandidateChanged = false;
-            for (int i = 0; i < 9; ++i) {
-                for (int j = 0; j < 9; ++j) {
-                    for (int cur : getExistValue(pan, i, j)) {
-                        if(pan[i][j].removeCandidate(cur))
-                            isCandidateChanged = true;
-                    }
-                }
-            }
-            if(!isCandidateChanged)
-                break;
-        }
+        // brute force
+        bruteForce(pan, 0, 0);
 
         // print res
         for (int i = 0; i < 9; ++i) {
             for (int j = 0; j < 9; ++j)
                 System.out.print(pan[i][j].val + " ");
             System.out.println();
+        }
+    }
+
+    private void bruteForce(Cell[][] pan, int row, int col) {
+        // remove already exist value from candidate
+        while (true) {
+            boolean isCandidateChanged = false;
+            for (int i = 0; i < 9; ++i) {
+                for (int j = 0; j < 9; ++j) {
+                    for (int cur : getExistValue(pan, i, j)) {
+                        if (pan[i][j].removeCandidate(cur))
+                            isCandidateChanged = true;
+                    }
+                }
+            }
+            if (!isCandidateChanged)
+                break;
+        }
+
+        // count non zero, return if non zero count is 81 (all solved)
+        int nonZeroCnt = 0;
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j) {
+                if(pan[i][j].val != 0)
+                    ++nonZeroCnt;
+            }
+        }
+        if(nonZeroCnt == 81)
+            return;
+
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j) {
+                if (pan[i][j].candidate.size() == 0)
+                    continue;
+
+                for(int k=0; k<pan[i][j].candidate.size(); ++k) {
+                    pan[i][j].candidate.remove(k);
+                    bruteForce(pan, i, j);
+                }
+            }
         }
     }
 
