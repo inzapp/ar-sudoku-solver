@@ -5,270 +5,77 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.*;
 
-class Main {
-    private static boolean[][] check_col = new boolean[9][10];//행 검사
-    private static boolean[][] check_row = new boolean[9][10];//열 검사
-    private static boolean[][] check_box = new boolean[9][10];//박스 검사
+class Node {
+    int x;
+    int y;
 
-    static class Node {
-        int x;
-        int y;
-
-        Node(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-    }
-
-    // arr=스도쿠, count= 전체 빈칸의 수, nodes=빈칸위치를 담고있는 리스트, idx=현재 탐색 중인 빈칸의 인덱스
-    private static boolean solve(int[][] arr, int count, ArrayList<Node> nodes, int idx) {
-        if (idx >= count) {//비어있는 칸을 모두 탐색했다면 출력
-            for (int i = 0; i < 9; i++) {
-                for (int j = 0; j < 9; j++) {
-                    System.out.print(arr[i][j] + " ");
-                }
-                System.out.println();
-            }
-            return true;//탐색 끝
-        }
-        Node node = nodes.get(idx);
-        for (int i = 1; i <= 9; i++) {//1부터 9까지 모든 경우의 수 탐색
-//promising?
-            if (check_col[node.x][i])
-                continue;
-            if (check_row[node.y][i])
-                continue;
-            if (check_box[(node.x / 3) * 3 + (node.y) / 3][i])
-                continue;
-            check_col[node.x][i] = true;
-            check_row[node.y][i] = true;
-            check_box[(node.x / 3) * 3 + (node.y) / 3][i] = true;
-
-            arr[node.x][node.y] = i;
-
-            if (solve(arr, count, nodes, idx + 1))
-                return true;//탐색 끝
-//백트래킹
-            arr[node.x][node.y] = 0;
-            check_col[node.x][i] = false;
-            check_row[node.y][i] = false;
-            check_box[(node.x / 3) * 3 + (node.y) / 3][i] = false;
-        }
-
-        return false;
-    }
-
-    static void main_(String[] args) {
-        Scanner scan = new Scanner(System.in);
-        int[][] sudoku = new int[9][9];
-
-        int count = 0;
-        ArrayList<Node> nodes = new ArrayList<>();
-
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
-                sudoku[i][j] = scan.nextInt();
-                if (sudoku[i][j] == 0) {
-                    count++;
-                    nodes.add(new Node(i, j));
-                } else {
-                    check_col[i][sudoku[i][j]] = true;
-                    check_row[j][sudoku[i][j]] = true;
-                    check_box[(i / 3) * 3 + (j / 3)][sudoku[i][j]] = true;
-                }
-            }
-        }
-
-        solve(sudoku, count, nodes, 0);
+    Node(int x, int y) {
+        this.x = x;
+        this.y = y;
     }
 }
 
 class SudokuAlgorithmSolver {
-    private static int cnt = 0;
-    private static List<Integer> existValue = new ArrayList<>();
+    private boolean[][] checkCol = new boolean[9][10];
+    private boolean[][] checkRow = new boolean[9][10];
+    private boolean[][] checkBox = new boolean[9][10];
 
-    private class Cell {
-        int val;
-        List<Integer> candidate;
-
-        Cell(int val) {
-            if (val == 0) {
-                this.val = 0;
-                candidate = new ArrayList<>(Arrays.asList(
-                        1, 2, 3, 4, 5, 6, 7, 8, 9
-                ));
-            } else {
-                this.val = val;
-                candidate = new ArrayList<>();
-            }
+    private int[][] solve(int[][] sudoku, int cnt, ArrayList<Node> nodes, int idx) {
+        // print res if solve all empty cell
+        if (cnt <= idx) {
+//            for (int i = 0; i < 9; ++i) {
+//                for (int j = 0; j < 9; j++)
+//                    System.out.print(sudoku[i][j] + " ");
+//                System.out.println();
+//            }
+            return sudoku;
         }
 
-        boolean removeCandidate(int val) {
-            boolean res = candidate.remove(new Integer(val));
-            if (candidate.size() == 1)
-                this.val = candidate.get(0);
-            return res;
+        Node node = nodes.get(idx);
+
+        // brute force 1 ~ 9
+        for (int i = 1; i <= 9; ++i) {
+            if (checkCol[node.x][i])
+                continue;
+            if (checkRow[node.y][i])
+                continue;
+            if (checkBox[(node.x / 3) * 3 + (node.y) / 3][i])
+                continue;
+
+            checkCol[node.x][i] = true;
+            checkRow[node.y][i] = true;
+            checkBox[(node.x / 3) * 3 + (node.y) / 3][i] = true;
+            sudoku[node.x][node.y] = i;
+            if (solve(sudoku, cnt, nodes, idx + 1) != null)
+                return sudoku;
+
+            // back tracking
+            sudoku[node.x][node.y] = 0;
+            checkCol[node.x][i] = false;
+            checkRow[node.y][i] = false;
+            checkBox[(node.x / 3) * 3 + (node.y) / 3][i] = false;
         }
+        return null;
     }
 
-    void solve() {
-        // input value
-        Scanner sc = new Scanner(System.in);
-        Cell[][] pan = new Cell[9][9];
-        for (int i = 0; i < 9; ++i) {
-            for (int j = 0; j < 9; ++j)
-                pan[i][j] = new Cell(sc.nextInt());
-        }
+    int[][] getAnswer(int[][] sudoku) {
+        int cnt = 0;
+        ArrayList<Node> nodes = new ArrayList<>();
 
-        // brute force
-        bruteForce(pan, 0, 0);
-
-        // print res
-        for (int i = 0; i < 9; ++i) {
-            for (int j = 0; j < 9; ++j)
-                System.out.print(pan[i][j].val + " ");
-            System.out.println();
-        }
-    }
-
-    private void bruteForce(Cell[][] pan, int row, int col) {
-        // remove already exist value from candidate
-        while (true) {
-            boolean isCandidateChanged = false;
-            for (int i = 0; i < 9; ++i) {
-                for (int j = 0; j < 9; ++j) {
-                    getExistValue(pan, i, j);
-                    for (int cur : existValue) {
-                        if (pan[i][j].removeCandidate(cur))
-                            isCandidateChanged = true;
-                    }
-                }
-            }
-            if (!isCandidateChanged)
-                break;
-        }
-
-        // count non zero, return if non zero count is 81 (all solved)
-        int nonZeroCnt = 0;
-        for (int i = 0; i < 9; ++i) {
-            for (int j = 0; j < 9; ++j) {
-                if (pan[i][j].val != 0)
-                    ++nonZeroCnt;
-                else break;
-            }
-        }
-
-        // validation check
-        if (nonZeroCnt == 81) {
-            boolean condition = true;
-
-            // row validation check
-            int sum;
-            for (int i = 0; i < 9; ++i) {
-                sum = 0;
-                for (int cur : getHorizontal(pan, i))
-                    sum += cur;
-                System.out.println(sum);
-                if (sum != 45) {
-                    condition = false;
-                    break;
-                }
-            }
-
-            // col validation check
-            for (int i = 0; i < 9; ++i) {
-                sum = 0;
-                for (int cur : getVertical(pan, i))
-                    sum += cur;
-                if (sum != 45) {
-                    condition = false;
-                    break;
-                }
-            }
-
-            // square validation check
-            int[] index = new int[]{1, 4, 7};
-            for (int i : index) {
-                for (int j : index) {
-                    sum = 0;
-                    for (int cur : getSquare(pan, i, j))
-                        sum += cur;
-                    if (sum != 45) {
-                        condition = false;
-                        break;
-                    }
-                }
-            }
-
-            System.out.println(condition);
-            if (condition)
-                return;
-        }
-
-        for (int i = row; i < 9; ++i) {
-            for (int j = col; j < 9; ++j) {
-                if (pan[i][j].candidate.size() == 0)
-                    continue;
-
-                if (pan[i][j].candidate.size() == 2) {
-                    for (int k = 0; k < pan[i][j].candidate.size(); ++k) {
-                        pan[i][j].removeCandidate(k);
-                        bruteForce(pan, i, j);
-                        pan[i][j].candidate.add(k);
-                    }
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (sudoku[i][j] == 0) {
+                    cnt++;
+                    nodes.add(new Node(i, j));
+                } else {
+                    checkCol[i][sudoku[i][j]] = true;
+                    checkRow[j][sudoku[i][j]] = true;
+                    checkBox[(i / 3) * 3 + (j / 3)][sudoku[i][j]] = true;
                 }
             }
         }
 
-
-    }
-
-    private void getExistValue(Cell[][] pan, int row, int col) {
-        if (existValue.size() > 0) {
-            existValue.subList(0, existValue.size()).clear();
-        }
-        existValue.addAll(getHorizontal(pan, row));
-        existValue.addAll(getVertical(pan, col));
-        existValue.addAll(getSquare(pan, row, col));
-    }
-
-    private List<Integer> getHorizontal(Cell[][] pan, int row) {
-        List<Integer> horizontal = new ArrayList<>();
-        for (int i = 0; i < 9; ++i)
-            horizontal.add(pan[row][i].val);
-        return horizontal;
-    }
-
-    private List<Integer> getVertical(Cell[][] pan, int col) {
-        List<Integer> vertical = new ArrayList<>();
-        for (int i = 0; i < 9; ++i)
-            vertical.add(pan[i][col].val);
-        return vertical;
-    }
-
-    private List<Integer> getSquare(Cell[][] pan, int row, int col) {
-        if (row == 0 || row == 1 || row == 2)
-            row = 0;
-        else if (row == 3 || row == 4 || row == 5)
-            row = 3;
-        else if (row == 6 || row == 7 || row == 8)
-            row = 6;
-
-        if (col == 0 || col == 1 || col == 2)
-            col = 0;
-        else if (col == 3 || col == 4 || col == 5)
-            col = 3;
-        else if (col == 6 || col == 7 || col == 8)
-            col = 6;
-
-        int iEnd = row + 3;
-        int jEnd = col + 3;
-        List<Integer> square = new ArrayList<>();
-        for (int i = row; i < iEnd; ++i) {
-            for (int j = col; j < jEnd; ++j)
-                square.add(pan[i][j].val);
-        }
-        return square;
+        return solve(sudoku, cnt, nodes, 0);
     }
 }
 
@@ -287,8 +94,24 @@ public class ArSudokuSolver {
     }
 
     public static void main(String[] args) {
-        Main.main_(new String[]{});
-//        new SudokuAlgorithmSolver().solve();
+        int[][] answer = new SudokuAlgorithmSolver().getAnswer(new int[][]{
+                {0, 3, 0, 0, 5, 0, 0, 8, 0},
+                {9, 0, 0, 0, 0, 8, 0, 0, 6},
+                {0, 0, 0, 2, 0, 4, 0, 0, 0},
+                {0, 5, 6, 0, 0, 0, 1, 0, 0},
+                {7, 0, 0, 0, 0, 0, 0, 0, 2},
+                {0, 0, 9, 0, 0, 0, 3, 6, 0},
+                {0, 0, 0, 5, 0, 2, 0, 0, 0},
+                {4, 0, 0, 6, 0, 0, 0, 0, 8},
+                {0, 8, 0, 0, 1, 0, 0, 9, 0}
+        });
+
+        for(int[] row : answer) {
+            for(int col : row) {
+                System.out.print(col + " ");
+            }
+            System.out.println();
+        }
         System.exit(0);
 
         // load image
