@@ -6,6 +6,7 @@ import org.opencv.imgproc.Imgproc;
 import java.util.*;
 
 class SudokuAlgorithmSolver {
+    private static List<Integer> existValue;
     private class Cell {
         int val;
         List<Integer> candidate;
@@ -70,21 +71,67 @@ class SudokuAlgorithmSolver {
         int nonZeroCnt = 0;
         for (int i = 0; i < 9; ++i) {
             for (int j = 0; j < 9; ++j) {
-                if(pan[i][j].val != 0)
+                if (pan[i][j].val != 0)
                     ++nonZeroCnt;
+                else break;
             }
         }
-        if(nonZeroCnt == 81)
-            return;
 
-        for (int i = 0; i < 9; ++i) {
-            for (int j = 0; j < 9; ++j) {
+        // validation check
+        if (nonZeroCnt == 81) {
+            boolean condition = true;
+
+            // row validation check
+            int sum;
+            for (int i = 0; i < 9; ++i) {
+                sum = 0;
+                for (int cur : getVertical(pan, i))
+                    sum += cur;
+                if (sum != 45) {
+                    condition = false;
+                    break;
+                }
+            }
+
+            // col validation check
+            for (int i = 0; i < 9; ++i) {
+                sum = 0;
+                for (int cur : getHorizontal(pan, i))
+                    sum += cur;
+                if (sum != 45) {
+                    condition = false;
+                    break;
+                }
+            }
+
+            // square validation check
+            int[] index = new int[]{1, 4, 7};
+            for(int i : index) {
+                for(int j : index) {
+                    sum = 0;
+                    for (int cur : getSquare(pan, i, j))
+                        sum += cur;
+                    if (sum != 45) {
+                        condition = false;
+                        break;
+                    }
+                }
+            }
+
+            if(condition)
+                return;
+        }
+
+        for (int i = row; i < 9; ++i) {
+            for (int j = col; j < 9; ++j) {
                 if (pan[i][j].candidate.size() == 0)
                     continue;
 
-                for(int k=0; k<pan[i][j].candidate.size(); ++k) {
-                    pan[i][j].candidate.remove(k);
-                    bruteForce(pan, i, j);
+                if (pan[i][j].candidate.size() == 2) {
+                    for (int k = 0; k < pan[i][j].candidate.size(); ++k) {
+                        pan[i][j].removeCandidate(k);
+                        bruteForce(pan, i, j);
+                    }
                 }
             }
         }
