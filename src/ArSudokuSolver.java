@@ -5,32 +5,24 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.*;
 
-class Node {
-    int x;
-    int y;
-
-    Node(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-}
-
 class SudokuAlgorithmSolver {
+    static class Node {
+        int x;
+        int y;
+
+        Node(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
     private boolean[][] checkCol = new boolean[9][10];
     private boolean[][] checkRow = new boolean[9][10];
     private boolean[][] checkBox = new boolean[9][10];
 
     private int[][] solve(int[][] sudoku, int cnt, ArrayList<Node> nodes, int idx) {
-        // print res if solve all empty cell
-        if (cnt <= idx) {
-//            for (int i = 0; i < 9; ++i) {
-//                for (int j = 0; j < 9; j++)
-//                    System.out.print(sudoku[i][j] + " ");
-//                System.out.println();
-//            }
+        if (cnt <= idx)
             return sudoku;
-        }
-
         Node node = nodes.get(idx);
 
         // brute force 1 ~ 9
@@ -94,25 +86,24 @@ public class ArSudokuSolver {
     }
 
     public static void main(String[] args) {
-        int[][] answer = new SudokuAlgorithmSolver().getAnswer(new int[][]{
-                {0, 3, 0, 0, 5, 0, 0, 8, 0},
-                {9, 0, 0, 0, 0, 8, 0, 0, 6},
-                {0, 0, 0, 2, 0, 4, 0, 0, 0},
-                {0, 5, 6, 0, 0, 0, 1, 0, 0},
-                {7, 0, 0, 0, 0, 0, 0, 0, 2},
-                {0, 0, 9, 0, 0, 0, 3, 6, 0},
-                {0, 0, 0, 5, 0, 2, 0, 0, 0},
-                {4, 0, 0, 6, 0, 0, 0, 0, 8},
-                {0, 8, 0, 0, 1, 0, 0, 9, 0}
-        });
-
-        for(int[] row : answer) {
-            for(int col : row) {
-                System.out.print(col + " ");
-            }
-            System.out.println();
-        }
-        System.exit(0);
+//        int[][] answer = new SudokuAlgorithmSolver().getAnswer(new int[][]{
+//                {0, 3, 0, 0, 5, 0, 0, 8, 0},
+//                {9, 0, 0, 0, 0, 8, 0, 0, 6},
+//                {0, 0, 0, 2, 0, 4, 0, 0, 0},
+//                {0, 5, 6, 0, 0, 0, 1, 0, 0},
+//                {7, 0, 0, 0, 0, 0, 0, 0, 2},
+//                {0, 0, 9, 0, 0, 0, 3, 6, 0},
+//                {0, 0, 0, 5, 0, 2, 0, 0, 0},
+//                {4, 0, 0, 6, 0, 0, 0, 0, 8},
+//                {0, 8, 0, 0, 1, 0, 0, 9, 0}
+//        });
+//
+//        for (int[] row : answer) {
+//            for (int col : row)
+//                System.out.print(col + " ");
+//            System.out.println();
+//        }
+//        System.exit(0);
 
         // load image
         Mat raw = Imgcodecs.imread("C:\\inzapp\\sudoku\\s13.jpg", Imgcodecs.IMREAD_ANYCOLOR);
@@ -129,15 +120,15 @@ public class ArSudokuSolver {
         Imgproc.Canny(canny, canny, 100, 100);
         Mat lines = new Mat();
         Imgproc.HoughLines(canny, lines, 1, Math.PI / 180, 150);
-        for (int x = 0; x < lines.rows(); x++) {
-            double rho = lines.get(x, 0)[0];
-            double theta = lines.get(x, 0)[1];
+        for (int row = 0; row < lines.rows(); row++) {
+            double rho = lines.get(row, 0)[0];
+            double theta = lines.get(row, 0)[1];
             double a = Math.cos(theta);
             double b = Math.sin(theta);
-            double x0 = a * rho;
-            double y0 = b * rho;
-            Point pt1 = new Point(Math.round(x0 + 1000 * (-b)), Math.round(y0 + 1000 * (a)));
-            Point pt2 = new Point(Math.round(x0 - 1000 * (-b)), Math.round(y0 - 1000 * (a)));
+            double x = a * rho;
+            double y = b * rho;
+            Point pt1 = new Point(Math.round(x + 1000 * (-b)), Math.round(y + 1000 * (a)));
+            Point pt2 = new Point(Math.round(x - 1000 * (-b)), Math.round(y - 1000 * (a)));
             Imgproc.line(raw, pt1, pt2, new Scalar(255, 0, 0), 2, Imgproc.LINE_AA, 0);
         }
 
