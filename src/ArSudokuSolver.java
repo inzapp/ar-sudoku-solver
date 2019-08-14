@@ -29,31 +29,61 @@ class SudokuAlgorithmSolver {
         }
     }
 
-    public void solve() {
+    void solve() {
+        // input value
         Scanner sc = new Scanner(System.in);
-        Cell[][][] pan = new Cell[9][3][3];
-        for (int sq = 0; sq < 9; ++sq) {
-            for (int i = 0; i < 3; ++i) {
-                for (int j = 0; j < 3; ++j) {
-                    pan[sq][i][j] = new Cell(sc.nextInt());
-                }
-            }
+        Cell[][] pan = new Cell[9][9];
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j)
+                pan[i][j] = new Cell(sc.nextInt());
         }
 
-        pan[0][0][0].remoteCandidate(1);
-        pan[0][0][0].remoteCandidate(2);
-        pan[0][0][0].remoteCandidate(3);
-        pan[0][0][0].remoteCandidate(4);
-        pan[0][0][0].remoteCandidate(5);
-        pan[0][0][0].remoteCandidate(6);
-        pan[0][0][0].remoteCandidate(7);
-        System.out.println(pan[0][0][0].val);
-        pan[0][0][0].remoteCandidate(8);
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j) {
+                for (int cur : getSquare(pan, i, j))
+                    System.out.print(cur);
+                System.out.println();
+            }
+        }
+    }
 
-        for (int cur : pan[0][0][0].candidate)
-            System.out.print(cur + " ");
+    private List<Integer> getHorizontal(Cell[][] pan, int row) {
+        List<Integer> horizontal = new ArrayList<>();
+        for (int i = 0; i < 9; ++i)
+            horizontal.add(pan[row][i].val);
+        return horizontal;
+    }
 
-        System.out.println(pan[0][0][0].val);
+    private List<Integer> getVertical(Cell[][] pan, int col) {
+        List<Integer> vertical = new ArrayList<>();
+        for (int i = 0; i < 9; ++i)
+            vertical.add(pan[i][col].val);
+        return vertical;
+    }
+
+    private List<Integer> getSquare(Cell[][] pan, int row, int col) {
+        if (row == 0 || row == 1 || row == 2)
+            row = 0;
+        else if (row == 3 || row == 4 || row == 5)
+            row = 3;
+        else if (row == 6 || row == 7 || row == 8)
+            row = 6;
+
+        if (col == 0 || col == 1 || col == 2)
+            col = 0;
+        else if (col == 3 || col == 4 || col == 5)
+            col = 3;
+        else if (col == 6 || col == 7 || col == 8)
+            col = 6;
+
+        int iEnd = row + 3;
+        int jEnd = col + 3;
+        List<Integer> square = new ArrayList<>();
+        for (int i = row; i < iEnd; ++i) {
+            for (int j = col; j < jEnd; ++j)
+                square.add(pan[i][j].val);
+        }
+        return square;
     }
 }
 
