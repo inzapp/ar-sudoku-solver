@@ -88,7 +88,15 @@ public class ArSudokuSolver {
     public static void main(String[] args) {
         VideoCapture vc = new VideoCapture("C:\\inz\\[VAP]cccsudoku_raw.mp4");
         Mat frame = new Mat();
+        int skipFrameCnt = 1;
+        int cnt = 0;
         while (vc.read(frame)) {
+            if(cnt != skipFrameCnt) {
+                ++cnt;
+                continue;
+            } else {
+                cnt = 0;
+            }
             process(frame, 1);
         }
     }
@@ -155,7 +163,7 @@ public class ArSudokuSolver {
         for (MatOfPoint contour : contourList) {
             Rect rect = Imgproc.boundingRect(contour);
             if (maxArea < rect.area()) {
-                if (rawResolution * 0.70 < rect.area() || rect.area() < rawResolution * 0.20)
+                if (rawResolution * 0.80 < rect.area() || rect.area() < rawResolution * 0.20)
                     continue;
                 biggestContour = contour;
                 maxArea = rect.area();
@@ -186,20 +194,12 @@ public class ArSudokuSolver {
             return;
         }
 
-//        for (Point cur : biggestContour.toArray())
-//            System.out.println(cur);
-
         // perspective transform with sudoku contour
         // copy points to point rank and sort
         Point[] points = biggestContour.toArray();
         PointRank[] pointRanks = new PointRank[points.length];
         for (int i = 0; i < pointRanks.length; i++)
             pointRanks[i] = new PointRank(points[i]);
-
-        // get 4 corner point of sudoku contour
-        // calculate top left point
-//        RotatedRect contourRect = Imgproc.minAreaRect(new MatOfPoint2f(biggestContour.toArray()));
-//        Imgproc.rectangle(raw, contourRect, new Scalar(255, 0, 0));
 
         Point topLeft;
         Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
@@ -255,7 +255,6 @@ public class ArSudokuSolver {
         Imgproc.circle(raw, bottomLeft, 10, new Scalar(0, 0, 255), 2);
         Imgproc.circle(raw, bottomRight, 10, new Scalar(0, 0, 255), 2);
 
-
         // perspective transform with sudoku contour
         Mat before = new MatOfPoint2f(topLeft, topRight, bottomLeft, bottomRight);
         Mat after = new MatOfPoint2f(new Point(0, 0), new Point(proc.cols(), 0),
@@ -281,7 +280,5 @@ public class ArSudokuSolver {
 //            HighGui.imshow("res", cur);
 //            HighGui.waitKey(fps);
 //        }
-
-//        HighGui.destroyAllWindows();
     }
 }
