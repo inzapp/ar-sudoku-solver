@@ -2,11 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="060a236c-8d3e-4b84-8d19-6f13e46a3428" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/ArSudokuSolver$PointRank.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/ArSudokuSolver$PointRank.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ar-sudoku-solver.iml" beforeDir="false" afterPath="$PROJECT_DIR$/ar-sudoku-solver.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/ArSudokuSolver.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/ArSudokuSolver.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/Node.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuAlgorithmSolver.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuAlgorithmSolver.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ArSudokuSolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ArSudokuSolver.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -29,7 +28,7 @@
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../lib/opencv/opencv-410.jar!/" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../lib/opencv-411.jar!/" />
     <property name="project.structure.last.edited" value="Libraries" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.2" />

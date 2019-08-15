@@ -1,7 +1,7 @@
 import org.opencv.core.*;
 import org.opencv.highgui.HighGui;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.videoio.VideoCapture;
 
 import java.util.*;
 
@@ -73,7 +73,7 @@ class SudokuAlgorithmSolver {
 
 public class ArSudokuSolver {
     static {
-        System.load("C:\\inzapp\\lib\\opencv\\opencv_java410.dll");
+        System.load("C:\\inz\\lib\\opencv_java411.dll");
     }
 
     static class PointRank {
@@ -86,7 +86,15 @@ public class ArSudokuSolver {
     }
 
     public static void main(String[] args) {
-//        int[][] answer = new SudokuAlgorithmSolver().getAnswer(new int[][]{
+        VideoCapture vc = new VideoCapture("C:\\inz\\[VAP]cccsudoku_raw.mp4");
+        Mat frame = new Mat();
+        while (vc.read(frame)) {
+            process(frame, 1);
+        }
+    }
+
+    private static void process(Mat raw, int fps) {
+        //        int[][] answer = new SudokuAlgorithmSolver().getAnswer(new int[][]{
 //                {0, 3, 0, 0, 5, 0, 0, 8, 0},
 //                {9, 0, 0, 0, 0, 8, 0, 0, 6},
 //                {0, 0, 0, 2, 0, 4, 0, 0, 0},
@@ -105,8 +113,8 @@ public class ArSudokuSolver {
 //        }
 //        System.exit(0);
 
+
         // load image
-        Mat raw = Imgcodecs.imread("C:\\inzapp\\sudoku\\s13.jpg", Imgcodecs.IMREAD_ANYCOLOR);
         Mat proc = raw.clone();
 
         // pre processing
@@ -116,24 +124,24 @@ public class ArSudokuSolver {
         Core.bitwise_not(proc, proc);
 
         // detect line
-        Mat canny = proc.clone();
-        Imgproc.Canny(canny, canny, 100, 100);
-        Mat lines = new Mat();
-        Imgproc.HoughLines(canny, lines, 1, Math.PI / 180, 150);
-        for (int row = 0; row < lines.rows(); row++) {
-            double rho = lines.get(row, 0)[0];
-            double theta = lines.get(row, 0)[1];
-            double a = Math.cos(theta);
-            double b = Math.sin(theta);
-            double x = a * rho;
-            double y = b * rho;
-            Point pt1 = new Point(Math.round(x + 1000 * (-b)), Math.round(y + 1000 * (a)));
-            Point pt2 = new Point(Math.round(x - 1000 * (-b)), Math.round(y - 1000 * (a)));
-            Imgproc.line(raw, pt1, pt2, new Scalar(255, 0, 0), 2, Imgproc.LINE_AA, 0);
-        }
+//        Mat canny = proc.clone();
+//        Imgproc.Canny(canny, canny, 100, 100);
+//        Mat lines = new Mat();
+//        Imgproc.HoughLines(canny, lines, 1, Math.PI / 180, 150);
+//        for (int row = 0; row < lines.rows(); row++) {
+//            double rho = lines.get(row, 0)[0];
+//            double theta = lines.get(row, 0)[1];
+//            double a = Math.cos(theta);
+//            double b = Math.sin(theta);
+//            double x = a * rho;
+//            double y = b * rho;
+//            Point pt1 = new Point(Math.round(x + 1000 * (-b)), Math.round(y + 1000 * (a)));
+//            Point pt2 = new Point(Math.round(x - 1000 * (-b)), Math.round(y - 1000 * (a)));
+//            Imgproc.line(raw, pt1, pt2, new Scalar(255, 0, 0), 2, Imgproc.LINE_AA, 0);
+//        }
 
-        HighGui.imshow("img", raw);
-        HighGui.waitKey(0);
+//        HighGui.imshow("img", raw);
+//        HighGui.waitKey(fps);
 
         // detect sudoku contour
         // find contours
@@ -142,20 +150,44 @@ public class ArSudokuSolver {
 
         // find biggest contour
         double maxArea = 0;
-        Rect biggestRect = new Rect();
         MatOfPoint biggestContour = new MatOfPoint();
+        int rawResolution = raw.rows() * raw.cols();
         for (MatOfPoint contour : contourList) {
             Rect rect = Imgproc.boundingRect(contour);
             if (maxArea < rect.area()) {
+                if (rawResolution * 0.70 < rect.area() || rect.area() < rawResolution * 0.20)
+                    continue;
                 biggestContour = contour;
-                biggestRect = rect;
                 maxArea = rect.area();
             }
         }
-        Imgproc.drawContours(raw, Collections.singletonList(biggestContour), 0, new Scalar(0, 255, 0), 2);
-//        Imgproc.rectangle(raw, biggestRect, new Scalar(0, 0, 255), 2);
-        for (Point cur : biggestContour.toArray())
-            System.out.println(cur);
+
+        // calculate convex hull of contour
+        MatOfInt hull = new MatOfInt();
+        try {
+            Imgproc.convexHull(biggestContour, hull);
+        } catch (Exception e) {
+            return;
+        }
+
+        Point[] contourArray = biggestContour.toArray();
+        Point[] hullPoints = new Point[hull.rows()];
+        List<Integer> hullContourIdxList = hull.toList();
+        for (int i = 0; i < hullContourIdxList.size(); i++)
+            hullPoints[i] = contourArray[hullContourIdxList.get(i)];
+
+        List<MatOfPoint> hullList = new ArrayList<>();
+        hullList.add(new MatOfPoint(hullPoints));
+
+        try {
+//            Imgproc.drawContours(raw, Collections.singletonList(biggestContour), 0, new Scalar(0, 255, 0), 2);
+            Imgproc.drawContours(raw, hullList, 0, new Scalar(0, 255, 0), 2);
+        } catch (Exception e) {
+            return;
+        }
+
+//        for (Point cur : biggestContour.toArray())
+//            System.out.println(cur);
 
         // perspective transform with sudoku contour
         // copy points to point rank and sort
@@ -166,11 +198,14 @@ public class ArSudokuSolver {
 
         // get 4 corner point of sudoku contour
         // calculate top left point
+//        RotatedRect contourRect = Imgproc.minAreaRect(new MatOfPoint2f(biggestContour.toArray()));
+//        Imgproc.rectangle(raw, contourRect, new Scalar(255, 0, 0));
+
         Point topLeft;
-        Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.x));
+        Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
         for (int i = 0; i < pointRanks.length; i++)
             pointRanks[i].rank += i + 1;
-        Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
+        Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.x));
         for (int i = 0; i < pointRanks.length; i++)
             pointRanks[i].rank += i + 1;
         Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
@@ -180,16 +215,16 @@ public class ArSudokuSolver {
         Point topRight;
         for (int i = 0; i < pointRanks.length; i++)
             pointRanks[i].rank = 0;
-        Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.x, a.point.x));
+        Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
         for (int i = 0; i < pointRanks.length; i++)
             pointRanks[i].rank += i + 1;
-        Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
+        Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.x, a.point.x));
         for (int i = 0; i < pointRanks.length; i++)
             pointRanks[i].rank += i + 1;
         Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
         topRight = pointRanks[0].point;
 
-        //calculate top right point
+        //calculate bottom left point
         Point bottomLeft;
         for (int i = 0; i < pointRanks.length; i++)
             pointRanks[i].rank = 0;
@@ -220,8 +255,6 @@ public class ArSudokuSolver {
         Imgproc.circle(raw, bottomLeft, 10, new Scalar(0, 0, 255), 2);
         Imgproc.circle(raw, bottomRight, 10, new Scalar(0, 0, 255), 2);
 
-        HighGui.imshow("res", raw);
-        HighGui.waitKey(0);
 
         // perspective transform with sudoku contour
         Mat before = new MatOfPoint2f(topLeft, topRight, bottomLeft, bottomRight);
@@ -230,24 +263,25 @@ public class ArSudokuSolver {
         Mat perspectiveTransformer = Imgproc.getPerspectiveTransform(before, after);
         Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
         Imgproc.resize(proc, proc, new Size(28 * 9, 28 * 9));
+        HighGui.imshow("transform", proc);
 
         // split mat into 9 * 9
-        Mat[] elements = new Mat[9 * 9];
-        int offset = proc.rows() / 9;
-        int index = 0;
-        for (int i = 0; i < 9 * offset; i += offset) {
-            for (int j = 0; j < 9 * offset; j += offset)
-                elements[index++] = proc.rowRange(i, i + offset).colRange(j, j + offset);
-        }
+//        Mat[] elements = new Mat[9 * 9];
+//        int offset = proc.rows() / 9;
+//        int index = 0;
+//        for (int i = 0; i < 9 * offset; i += offset) {
+//            for (int j = 0; j < 9 * offset; j += offset)
+//                elements[index++] = proc.rowRange(i, i + offset).colRange(j, j + offset);
+//        }
 
-        HighGui.imshow("res", proc);
-        HighGui.waitKey(0);
+        HighGui.imshow("cam", raw);
+        HighGui.waitKey(fps);
 
-        for (Mat cur : elements) {
-            HighGui.imshow("res", cur);
-            HighGui.waitKey(0);
-        }
+//        for (Mat cur : elements) {
+//            HighGui.imshow("res", cur);
+//            HighGui.waitKey(fps);
+//        }
 
-        HighGui.destroyAllWindows();
+//        HighGui.destroyAllWindows();
     }
 }
