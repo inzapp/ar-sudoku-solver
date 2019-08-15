@@ -1,6 +1,7 @@
 import org.opencv.core.*;
 import org.opencv.highgui.HighGui;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 import org.opencv.videoio.VideoCapture;
 
 import java.util.ArrayList;
@@ -89,7 +90,7 @@ public class ArSudokuSolver {
     }
 
     public static void main(String[] args) {
-        final int skipFrameCnt = 2;
+        final int skipFrameCnt = 3;
         int cnt = 0;
         VideoCapture vc = new VideoCapture("C:\\inz\\[VAP]cccsudoku_raw.mp4");
         Mat frame = new Mat();
@@ -156,7 +157,10 @@ public class ArSudokuSolver {
         // detect sudoku contour
         // find contours
         List<MatOfPoint> contourList = new ArrayList<>();
-        Imgproc.findContours(proc, contourList, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
+        Imgproc.findContours(proc, contourList, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_NONE);
+
+        // calculate center of raw img
+        Point rawCenter = new Point(raw.width() / 2, raw.height() / 2);
 
         // find biggest contour
         double maxArea = 0;
@@ -165,16 +169,37 @@ public class ArSudokuSolver {
         for (MatOfPoint contour : contourList) {
             Rect rect = Imgproc.boundingRect(contour);
             if (maxArea < rect.area()) {
-                double ratio = rect.height / (double) rect.width;
-                if (ratio < 0.5 || 1.5 < ratio)
+
+                // calculate center of contour using moment
+                Moments moments = Imgproc.moments(contour, false);
+                int x = (int) (moments.get_m10() / moments.get_m00());
+                int y = (int) (moments.get_m01() / moments.get_m00());
+                Point contourCenter = new Point(x, y);
+
+                double distanceFromCenter = Core.norm(new MatOfPoint(rawCenter), new MatOfPoint(contourCenter));
+                if(100 < distanceFromCenter)
                     continue;
 
-                if (rect.area() < rawResolution * 0.3 || rawResolution * 0.7 < rect.area())
+                double ratio = rect.height / (double) rect.width;
+//                if (ratio < 0.5 || 1.5 < ratio)
+//                    continue;
+
+                if (rect.area() < rawResolution * 0.2 || rawResolution * 0.8 < rect.area())
                     continue;
                 biggestContour = contour;
                 maxArea = rect.area();
             }
         }
+
+        // draw center of contour
+        // calculate center of contour using moment
+        Moments moments = Imgproc.moments(biggestContour, false);
+        int x = (int) (moments.get_m10() / moments.get_m00());
+        int y = (int) (moments.get_m01() / moments.get_m00());
+        Point contourCenter = new Point(x, y);
+        Imgproc.circle(raw, contourCenter, 10, new Scalar(0, 0, 255), -1);
+        Imgproc.circle(raw, rawCenter, 10, new Scalar(0, 255, 0), -1);
+        System.out.println(Core.norm(new MatOfPoint(contourCenter), new MatOfPoint(rawCenter)));
 
         // calculate convex hull of contour
         try {
@@ -256,13 +281,13 @@ public class ArSudokuSolver {
             Imgproc.circle(raw, bottomRight, 10, new Scalar(0, 0, 255), 2);
 
             // perspective transform with sudoku contour
-            Mat before = new MatOfPoint2f(topLeft, topRight, bottomLeft, bottomRight);
-            Mat after = new MatOfPoint2f(new Point(0, 0), new Point(proc.cols(), 0),
-                    new Point(0, proc.rows()), new Point(proc.cols(), proc.rows()));
-            Mat perspectiveTransformer = Imgproc.getPerspectiveTransform(before, after);
-            Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
-            Imgproc.resize(proc, proc, new Size(28 * 9, 28 * 9));
-            HighGui.imshow("transform", proc);
+//            Mat before = new MatOfPoint2f(topLeft, topRight, bottomLeft, bottomRight);
+//            Mat after = new MatOfPoint2f(new Point(0, 0), new Point(proc.cols(), 0),
+//                    new Point(0, proc.rows()), new Point(proc.cols(), proc.rows()));
+//            Mat perspectiveTransformer = Imgproc.getPerspectiveTransform(before, after);
+//            Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
+//            Imgproc.resize(proc, proc, new Size(28 * 9, 28 * 9));
+//            HighGui.imshow("transform", proc);
         } catch (Exception e) {
             // empty
         }
