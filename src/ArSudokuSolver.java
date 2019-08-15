@@ -3,7 +3,10 @@ import org.opencv.highgui.HighGui;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 class SudokuAlgorithmSolver {
     static class Node {
@@ -86,12 +89,12 @@ public class ArSudokuSolver {
     }
 
     public static void main(String[] args) {
+        final int skipFrameCnt = 1;
+        int cnt = 0;
         VideoCapture vc = new VideoCapture("C:\\inz\\[VAP]cccsudoku_raw.mp4");
         Mat frame = new Mat();
-        int skipFrameCnt = 1;
-        int cnt = 0;
         while (vc.read(frame)) {
-            if(cnt != skipFrameCnt) {
+            if (cnt != skipFrameCnt) {
                 ++cnt;
                 continue;
             } else {
@@ -163,7 +166,11 @@ public class ArSudokuSolver {
         for (MatOfPoint contour : contourList) {
             Rect rect = Imgproc.boundingRect(contour);
             if (maxArea < rect.area()) {
-                if (rawResolution * 0.80 < rect.area() || rect.area() < rawResolution * 0.20)
+                double ratio = rect.height / (double) rect.width;
+                if (ratio < 0.5 || 1.5 < ratio)
+                    continue;
+
+                if (rect.area() < rawResolution * 0.4 || rawResolution * 0.6 < rect.area())
                     continue;
                 biggestContour = contour;
                 maxArea = rect.area();
@@ -171,98 +178,97 @@ public class ArSudokuSolver {
         }
 
         // calculate convex hull of contour
-        MatOfInt hull = new MatOfInt();
         try {
+            MatOfInt hull = new MatOfInt();
             Imgproc.convexHull(biggestContour, hull);
-        } catch (Exception e) {
-            return;
-        }
+            Point[] contourArray = biggestContour.toArray();
+            Point[] hullPoints = new Point[hull.rows()];
+            List<Integer> hullContourIdxList = hull.toList();
+            for (int i = 0; i < hullContourIdxList.size(); i++)
+                hullPoints[i] = contourArray[hullContourIdxList.get(i)];
 
-        Point[] contourArray = biggestContour.toArray();
-        Point[] hullPoints = new Point[hull.rows()];
-        List<Integer> hullContourIdxList = hull.toList();
-        for (int i = 0; i < hullContourIdxList.size(); i++)
-            hullPoints[i] = contourArray[hullContourIdxList.get(i)];
-
-        List<MatOfPoint> hullList = new ArrayList<>();
-        hullList.add(new MatOfPoint(hullPoints));
-
-        try {
-//            Imgproc.drawContours(raw, Collections.singletonList(biggestContour), 0, new Scalar(0, 255, 0), 2);
+            List<MatOfPoint> hullList = new ArrayList<>();
+            hullList.add(new MatOfPoint(hullPoints));
             Imgproc.drawContours(raw, hullList, 0, new Scalar(0, 255, 0), 2);
         } catch (Exception e) {
-            return;
+            // empty
         }
 
         // perspective transform with sudoku contour
         // copy points to point rank and sort
-        Point[] points = biggestContour.toArray();
-        PointRank[] pointRanks = new PointRank[points.length];
-        for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i] = new PointRank(points[i]);
+        try {
+            Point[] points = biggestContour.toArray();
+            PointRank[] pointRanks = new PointRank[points.length];
+            for (int i = 0; i < pointRanks.length; i++)
+                pointRanks[i] = new PointRank(points[i]);
 
-        Point topLeft;
-        Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
-        for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].rank += i + 1;
-        Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.x));
-        for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].rank += i + 1;
-        Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
-        topLeft = pointRanks[0].point;
+            Point topLeft;
+            Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
+            for (int i = 0; i < pointRanks.length; i++)
+                pointRanks[i].rank += i + 1;
+            Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.x));
+            for (int i = 0; i < pointRanks.length; i++)
+                pointRanks[i].rank += i + 1;
+            Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
+            topLeft = pointRanks[0].point;
 
-        //calculate top right point
-        Point topRight;
-        for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].rank = 0;
-        Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
-        for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].rank += i + 1;
-        Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.x, a.point.x));
-        for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].rank += i + 1;
-        Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
-        topRight = pointRanks[0].point;
+            //calculate top right point
+            Point topRight;
+            for (int i = 0; i < pointRanks.length; i++)
+                pointRanks[i].rank = 0;
+            Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.x, a.point.x));
+            for (int i = 0; i < pointRanks.length; i++)
+                pointRanks[i].rank += i + 1;
+            Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
+            for (int i = 0; i < pointRanks.length; i++)
+                pointRanks[i].rank += i + 1;
+            Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
+            topRight = pointRanks[0].point;
 
-        //calculate bottom left point
-        Point bottomLeft;
-        for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].rank = 0;
-        Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.x));
-        for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].rank += i + 1;
-        Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.y, a.point.y));
-        for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].rank += i + 1;
-        Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
-        bottomLeft = pointRanks[0].point;
+            //calculate bottom left point
+            Point bottomLeft;
+            for (int i = 0; i < pointRanks.length; i++)
+                pointRanks[i].rank = 0;
+            Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.x));
+            for (int i = 0; i < pointRanks.length; i++)
+                pointRanks[i].rank += i + 1;
+            Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.y, a.point.y));
+            for (int i = 0; i < pointRanks.length; i++)
+                pointRanks[i].rank += i + 1;
+            Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
+            bottomLeft = pointRanks[0].point;
 
-        //calculate bottom right point
-        Point bottomRight;
-        for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].rank = 0;
-        Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.x, a.point.x));
-        for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].rank += i + 1;
-        Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.y, a.point.y));
-        for (int i = 0; i < pointRanks.length; i++)
-            pointRanks[i].rank += i + 1;
-        Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
-        bottomRight = pointRanks[0].point;
+            //calculate bottom right point
+            Point bottomRight;
+            for (int i = 0; i < pointRanks.length; i++)
+                pointRanks[i].rank = 0;
+            Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.x, a.point.x));
+            for (int i = 0; i < pointRanks.length; i++)
+                pointRanks[i].rank += i + 1;
+            Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.y, a.point.y));
+            for (int i = 0; i < pointRanks.length; i++)
+                pointRanks[i].rank += i + 1;
+            Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
+            bottomRight = pointRanks[0].point;
 
-        Imgproc.circle(raw, topLeft, 10, new Scalar(0, 0, 255), 2);
-        Imgproc.circle(raw, topRight, 10, new Scalar(0, 0, 255), 2);
-        Imgproc.circle(raw, bottomLeft, 10, new Scalar(0, 0, 255), 2);
-        Imgproc.circle(raw, bottomRight, 10, new Scalar(0, 0, 255), 2);
+            Imgproc.circle(raw, topLeft, 10, new Scalar(0, 0, 255), 2);
+            Imgproc.circle(raw, topRight, 10, new Scalar(0, 0, 255), 2);
+            Imgproc.circle(raw, bottomLeft, 10, new Scalar(0, 0, 255), 2);
+            Imgproc.circle(raw, bottomRight, 10, new Scalar(0, 0, 255), 2);
 
-        // perspective transform with sudoku contour
-        Mat before = new MatOfPoint2f(topLeft, topRight, bottomLeft, bottomRight);
-        Mat after = new MatOfPoint2f(new Point(0, 0), new Point(proc.cols(), 0),
-                new Point(0, proc.rows()), new Point(proc.cols(), proc.rows()));
-        Mat perspectiveTransformer = Imgproc.getPerspectiveTransform(before, after);
-        Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
-        Imgproc.resize(proc, proc, new Size(28 * 9, 28 * 9));
-        HighGui.imshow("transform", proc);
+            // perspective transform with sudoku contour
+            Mat before = new MatOfPoint2f(topLeft, topRight, bottomLeft, bottomRight);
+            Mat after = new MatOfPoint2f(new Point(0, 0), new Point(proc.cols(), 0),
+                    new Point(0, proc.rows()), new Point(proc.cols(), proc.rows()));
+            Mat perspectiveTransformer = Imgproc.getPerspectiveTransform(before, after);
+            Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
+            Imgproc.resize(proc, proc, new Size(28 * 9, 28 * 9));
+            HighGui.imshow("transform", proc);
+        } catch(Exception e) {
+            // empty
+        }
+
+
 
         // split mat into 9 * 9
 //        Mat[] elements = new Mat[9 * 9];
