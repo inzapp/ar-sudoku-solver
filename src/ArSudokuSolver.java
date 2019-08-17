@@ -3,6 +3,7 @@ import org.opencv.highgui.HighGui;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
+import org.opencv.ml.ANN_MLP;
 import org.opencv.videoio.VideoCapture;
 
 import java.io.File;
@@ -93,50 +94,66 @@ public class ArSudokuSolver {
 
     public static void main(String[] args) {
 
-        String dirPath = "C:\\inz\\lib\\sudoku_train_video_answer";
-        File[] files = new File("C:\\inz\\lib\\sudoku_train_video_answer").listFiles();
-        for (File cur : files) {
-            String[] splits = cur.getName().split("\\.");
-            if (splits[1].equals("txt")) {
-                try {
-
-                    // get sudoku arr
-                    Scanner sc = new Scanner(new FileInputStream(cur.getAbsolutePath()));
-                    int[][] sudoku = new int[9][9];
-                    for (int i = 0; i < sudoku.length; ++i) {
-                        for (int j = 0; j < sudoku[i].length; ++j) {
-                            sudoku[i][j] = sc.nextInt();
-                        }
-                    }
-
-                    // get video name
-                    String videoName = splits[0] + ".mp4";
-                    System.out.println(videoName);
-
-                    // train with video name and sudoku arr
-                    final int skipFrameCnt = 1;
-                    int cnt = 0;
-                    VideoCapture vc = new VideoCapture("C:\\inz\\lib\\sudoku_train_video_answer" + "\\" + videoName);
-//                    VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
-                    Mat frame = new Mat();
-                    while (vc.read(frame)) {
-                        if (cnt != skipFrameCnt) {
-                            ++cnt;
-                            continue;
-                        } else {
-                            cnt = 0;
-                        }
-                        process(frame, 1, sudoku);
-                    }
-
-                    System.out.println();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        // train with video name and sudoku arr
+        final int skipFrameCnt = 1;
+        int cnt = 0;
+//        VideoCapture vc = new VideoCapture("C:\\inz\\lib\\sudoku_train_video_answer" + "\\" + videoName);
+        VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
+        Mat frame = new Mat();
+        while (vc.read(frame)) {
+            if (cnt != skipFrameCnt) {
+                ++cnt;
+                continue;
+            } else {
+                cnt = 0;
             }
+            process(frame, 1, new int[][]{});
         }
 
+        System.exit(0);
 
+//        String dirPath = "C:\\inz\\lib\\sudoku_train_video_answer";
+//        File[] files = new File("C:\\inz\\lib\\sudoku_train_video_answer").listFiles();
+//        for (File cur : files) {
+//            String[] splits = cur.getName().split("\\.");
+//            if (splits[1].equals("txt")) {
+//                try {
+//
+//                    // get sudoku arr
+//                    Scanner sc = new Scanner(new FileInputStream(cur.getAbsolutePath()));
+//                    int[][] sudoku = new int[9][9];
+//                    for (int i = 0; i < sudoku.length; ++i) {
+//                        for (int j = 0; j < sudoku[i].length; ++j) {
+//                            sudoku[i][j] = sc.nextInt();
+//                        }
+//                    }
+//
+//                    // get video name
+//                    String videoName = splits[0] + ".mp4";
+//                    System.out.println(videoName);
+//
+////                    // train with video name and sudoku arr
+////                    final int skipFrameCnt = 1;
+////                    int cnt = 0;
+////                    VideoCapture vc = new VideoCapture("C:\\inz\\lib\\sudoku_train_video_answer" + "\\" + videoName);
+//////                    VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
+////                    Mat frame = new Mat();
+////                    while (vc.read(frame)) {
+////                        if (cnt != skipFrameCnt) {
+////                            ++cnt;
+////                            continue;
+////                        } else {
+////                            cnt = 0;
+////                        }
+////                        process(frame, 1, sudoku);
+////                    }
+//
+//                    System.out.println();
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
     }
 
     private static void process(Mat raw, int fps, int[][] sudoku) {
@@ -340,44 +357,45 @@ public class ArSudokuSolver {
 //                HighGui.waitKey(0);
 //            }
 
-            int idx = 0;
-            String savePath = "C:\\inz\\lib\\sudoku_train_data";
-            for (int i = 0; i < sudoku.length; ++i) {
-                for (int j = 0; j < sudoku[i].length; ++j) {
-                    Imgcodecs.imwrite(savePath + "\\" + sudoku[i][j] + "\\" + Math.random() + ".jpg", elements[idx++]);
-                }
-            }
-            System.out.println("save success");
+            // only used in saving train data
+//            int idx = 0;
+//            String savePath = "C:\\inz\\lib\\sudoku_train_data";
+//            for (int i = 0; i < sudoku.length; ++i) {
+//                for (int j = 0; j < sudoku[i].length; ++j) {
+//                    Imgcodecs.imwrite(savePath + "\\" + sudoku[i][j] + "\\" + Math.random() + ".jpg", elements[idx++]);
+//                }
+//            }
+//            System.out.println("save success");
 
             // load nn model
-//            ANN_MLP model = ANN_MLP.load("model.xml");
-//            Mat res = new Mat();
-//            Mat extractedSudoku = new Mat();
-//            for (Mat cur : elements) {
-//                cur.convertTo(cur, CvType.CV_32FC1);
-//                cur = cur.reshape(cur.channels(), 1);
-//                Core.normalize(cur, cur, 1, 0, Core.NORM_L2);
-//                model.predict(cur, res);
-//
-//                // max col
-//                int maxCol = -1;
-//                double max = -1;
-//                for (int col = 0; col < res.cols(); ++col) {
-//                    double curVal = res.get(0, col)[0];
-//                    if (max < curVal) {
-//                        max = curVal;
-//                        maxCol = col;
-//                    }
-//                }
-//
-//                Mat curValMat = new Mat(1, 1, CvType.CV_32S);
-//                curValMat.put(0, 0, new int[]{maxCol + 1});
-//                extractedSudoku.push_back(curValMat);
-//            }
-//
-//            extractedSudoku = extractedSudoku.reshape(extractedSudoku.channels(), 9);
-//            System.out.println(extractedSudoku.dump());
-//            System.out.println();
+            ANN_MLP model = ANN_MLP.load("model.xml");
+            Mat res = new Mat();
+            Mat extractedSudoku = new Mat();
+            for (Mat cur : elements) {
+                cur.convertTo(cur, CvType.CV_32FC1);
+                cur = cur.reshape(cur.channels(), 1);
+                Core.normalize(cur, cur, 1, 0, Core.NORM_L2);
+                model.predict(cur, res);
+
+                // max col
+                int maxCol = -1;
+                double max = -1;
+                for (int col = 0; col < res.cols(); ++col) {
+                    double curVal = res.get(0, col)[0];
+                    if (max < curVal) {
+                        max = curVal;
+                        maxCol = col;
+                    }
+                }
+
+                Mat curValMat = new Mat(1, 1, CvType.CV_32S);
+                curValMat.put(0, 0, new int[]{maxCol});
+                extractedSudoku.push_back(curValMat);
+            }
+
+            extractedSudoku = extractedSudoku.reshape(extractedSudoku.channels(), 9);
+            System.out.println(extractedSudoku.dump());
+            System.out.println();
         } catch (Exception e) {
             // empty
         }
