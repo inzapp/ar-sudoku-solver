@@ -1,17 +1,15 @@
 import org.opencv.core.*;
 import org.opencv.highgui.HighGui;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 import org.opencv.videoio.VideoCapture;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.*;
 
 class SudokuAlgorithmSolver {
-    static class Node {
+    private static class Node {
         int x;
         int y;
 
@@ -83,7 +81,7 @@ public class ArSudokuSolver {
         System.load("C:\\inz\\lib\\opencv_java411.dll");
     }
 
-    static class PointRank {
+    private static class PointRank {
         PointRank(Point point) {
             this.point = point;
         }
@@ -95,7 +93,8 @@ public class ArSudokuSolver {
     public static void main(String[] args) {
         final int skipFrameCnt = 1;
         int cnt = 0;
-        VideoCapture vc = new VideoCapture("C:\\inz\\123.mp4");
+//        VideoCapture vc = new VideoCapture("C:\\inz\\123.mp4");
+        VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
         Mat frame = new Mat();
         while (vc.read(frame)) {
             if (cnt != skipFrameCnt) {
@@ -108,8 +107,43 @@ public class ArSudokuSolver {
         }
     }
 
+    private static void train() {
+        String dirPath = "C:\\inz\\lib\\sudoku_train_video_answer";
+        File[] files = new File("C:\\inz\\lib\\sudoku_train_video_answer").listFiles();
+        for (File cur : files) {
+            String[] splits = cur.getName().split("\\.");
+            if (splits[1].equals("txt")) {
+                try {
+                    Scanner sc = new Scanner(new FileInputStream(cur.getAbsolutePath()));
+                    int[][] sudoku = new int[9][9];
+                    for (int i = 0; i < sudoku.length; ++i) {
+                        for (int j = 0; j < sudoku[i].length; ++j) {
+                            sudoku[i][j] = sc.nextInt();
+                        }
+                    }
+
+                    System.out.println(cur.getName());
+                    int[][] answer = new SudokuAlgorithmSolver().getAnswer(sudoku);
+                    for (int i = 0; i < answer.length; ++i) {
+                        for (int j = 0; j < answer[i].length; ++j) {
+                            System.out.print(answer[i][j] + " ");
+                        }
+                        System.out.println();
+                    }
+                    System.out.println();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     private static void process(Mat raw, int fps) {
-        //        int[][] answer = new SudokuAlgorithmSolver().getAnswer(new int[][]{
+        train();
+
+//        int[][] sudokuArr = new int[9][9];
+//        Scanner sc = new Scanner(new FileInputStream(""));
+//        int[][] answer = new SudokuAlgorithmSolver().getAnswer(new int[][]{
 //                {0, 3, 0, 0, 5, 0, 0, 8, 0},
 //                {9, 0, 0, 0, 0, 8, 0, 0, 6},
 //                {0, 0, 0, 2, 0, 4, 0, 0, 0},
@@ -126,7 +160,7 @@ public class ArSudokuSolver {
 //                System.out.print(col + " ");
 //            System.out.println();
 //        }
-//        System.exit(0);
+        System.exit(0);
 
         // load image
         Mat proc = raw.clone();
@@ -312,48 +346,92 @@ public class ArSudokuSolver {
                 HighGui.imshow("transform", proc);
 
             // split mat into 9 * 9
-            Mat[] elements = new Mat[9 * 9];
-            int offset = 28;
-            int index = 0;
-            for (int i = 0; i < 9 * offset; i += offset) {
-                for (int j = 0; j < 9 * offset; j += offset)
-                    elements[index++] = proc.rowRange(i, i + offset).colRange(j, j + offset);
-            }
+//            Mat[] elements = new Mat[9 * 9];
+//            int offset = 28;
+//            int index = 0;
+//            for (int i = 0; i < 9 * offset; i += offset) {
+//                for (int j = 0; j < 9 * offset; j += offset)
+//                    elements[index++] = proc.rowRange(i, i + offset).colRange(j, j + offset);
+//            }
+
+            // save with custom array
+            int[][] answer = new int[][]{
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {}
+            };
 
 //            for (Mat cur : elements) {
 //                HighGui.imshow("elements", cur);
 //                HighGui.waitKey(0);
 //            }
 
-            String savePath = "C:\\inz\\lib\\sudoku_train_data";
-            int idx = 0;
-            for (int row = 0; row < 3; ++row) {
-                // first line
-                for (int i = 0; i < 3; ++i) {
-                    Imgcodecs.imwrite(savePath + "\\1\\" + Math.random() + ".jpg", elements[idx++]);
-                    Imgcodecs.imwrite(savePath + "\\2\\" + Math.random() + ".jpg", elements[idx++]);
-                    Imgcodecs.imwrite(savePath + "\\3\\" + Math.random() + ".jpg", elements[idx++]);
-                }
+//            String savePath = "C:\\inz\\lib\\sudoku_train_data";
+//            int idx = 0;
+//            for (int row = 0; row < 3; ++row) {
+//                // first line
+//                for (int i = 0; i < 3; ++i) {
+//                    Imgcodecs.imwrite(savePath + "\\1\\" + Math.random() + ".jpg", elements[idx++]);
+//                    Imgcodecs.imwrite(savePath + "\\2\\" + Math.random() + ".jpg", elements[idx++]);
+//                    Imgcodecs.imwrite(savePath + "\\3\\" + Math.random() + ".jpg", elements[idx++]);
+//                }
+//
+//                // second line
+//                for (int i = 0; i < 3; ++i) {
+//                    Imgcodecs.imwrite(savePath + "\\4\\" + Math.random() + ".jpg", elements[idx++]);
+//                    Imgcodecs.imwrite(savePath + "\\5\\" + Math.random() + ".jpg", elements[idx++]);
+//                    Imgcodecs.imwrite(savePath + "\\6\\" + Math.random() + ".jpg", elements[idx++]);
+//                }
+//
+//                // third line
+//                for (int i = 0; i < 3; ++i) {
+//                    Imgcodecs.imwrite(savePath + "\\7\\" + Math.random() + ".jpg", elements[idx++]);
+//                    Imgcodecs.imwrite(savePath + "\\8\\" + Math.random() + ".jpg", elements[idx++]);
+//                    Imgcodecs.imwrite(savePath + "\\9\\" + Math.random() + ".jpg", elements[idx++]);
+//                }
+//            }
+//
+//            System.out.println("save 81 elements to image");
 
-                // second line
-                for (int i = 0; i < 3; ++i) {
-                    Imgcodecs.imwrite(savePath + "\\4\\" + Math.random() + ".jpg", elements[idx++]);
-                    Imgcodecs.imwrite(savePath + "\\5\\" + Math.random() + ".jpg", elements[idx++]);
-                    Imgcodecs.imwrite(savePath + "\\6\\" + Math.random() + ".jpg", elements[idx++]);
-                }
-
-                // third line
-                for (int i = 0; i < 3; ++i) {
-                    Imgcodecs.imwrite(savePath + "\\7\\" + Math.random() + ".jpg", elements[idx++]);
-                    Imgcodecs.imwrite(savePath + "\\8\\" + Math.random() + ".jpg", elements[idx++]);
-                    Imgcodecs.imwrite(savePath + "\\9\\" + Math.random() + ".jpg", elements[idx++]);
-                }
-            }
-
-            System.out.println("save 81 elements to image");
+            // load nn model
+//            ANN_MLP model = ANN_MLP.load("model.xml");
+//            Mat res = new Mat();
+//            Mat extractedSudoku = new Mat();
+//            for (Mat cur : elements) {
+//                cur.convertTo(cur, CvType.CV_32FC1);
+//                cur = cur.reshape(cur.channels(), 1);
+//                Core.normalize(cur, cur, 1, 0, Core.NORM_L2);
+//                model.predict(cur, res);
+//
+//                // max col
+//                int maxCol = -1;
+//                double max = -1;
+//                for (int col = 0; col < res.cols(); ++col) {
+//                    double curVal = res.get(0, col)[0];
+//                    if (max < curVal) {
+//                        max = curVal;
+//                        maxCol = col;
+//                    }
+//                }
+//
+//                Mat curValMat = new Mat(1, 1, CvType.CV_32S);
+//                curValMat.put(0, 0, new int[]{maxCol + 1});
+//                extractedSudoku.push_back(curValMat);
+//            }
+//
+//            extractedSudoku = extractedSudoku.reshape(extractedSudoku.channels(), 9);
+//            System.out.println(extractedSudoku.dump());
+//            System.out.println();
         } catch (Exception e) {
             // empty
         }
+
 
         HighGui.imshow("cam", raw);
         HighGui.waitKey(fps);
