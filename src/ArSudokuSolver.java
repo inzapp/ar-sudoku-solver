@@ -1,5 +1,6 @@
 import org.opencv.core.*;
 import org.opencv.highgui.HighGui;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 import org.opencv.videoio.VideoCapture;
@@ -58,10 +59,10 @@ class SudokuAlgorithmSolver {
         int cnt = 0;
         ArrayList<Node> nodes = new ArrayList<>();
 
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j) {
                 if (sudoku[i][j] == 0) {
-                    cnt++;
+                    ++cnt;
                     nodes.add(new Node(i, j));
                 } else {
                     checkCol[i][sudoku[i][j]] = true;
@@ -92,9 +93,9 @@ public class ArSudokuSolver {
     }
 
     public static void main(String[] args) {
-        final int skipFrameCnt = 0;
+        final int skipFrameCnt = 1;
         int cnt = 0;
-        VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
+        VideoCapture vc = new VideoCapture("C:\\inz\\123.mp4");
         Mat frame = new Mat();
         while (vc.read(frame)) {
             if (cnt != skipFrameCnt) {
@@ -136,9 +137,6 @@ public class ArSudokuSolver {
         Imgproc.adaptiveThreshold(proc, proc, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 121, 15);
         Core.bitwise_not(proc, proc);
 
-        if (VIEW_PROGRESS)
-            HighGui.imshow("proc", proc.clone());
-
         // detect line
         Mat canny = proc.clone();
         Imgproc.Canny(canny, canny, 100, 100);
@@ -159,10 +157,10 @@ public class ArSudokuSolver {
 
         // find contours
         List<MatOfPoint> contourList = new ArrayList<>();
-        Imgproc.findContours(proc, contourList, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_NONE);
+        Imgproc.findContours(proc, contourList, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
 
         // calculate center of raw img
-        Point rawCenter = new Point(raw.width() / 2, raw.height() / 2);
+        Point frameCenter = new Point(raw.width() / 2, raw.height() / 2);
 
         // extract sudoku contour
         double maxArea = 0;
@@ -184,7 +182,7 @@ public class ArSudokuSolver {
             int x = (int) (moments.get_m10() / moments.get_m00());
             int y = (int) (moments.get_m01() / moments.get_m00());
             Point contourCenter = new Point(x, y);
-            double distanceFromCenter = Core.norm(new MatOfPoint(rawCenter), new MatOfPoint(contourCenter));
+            double distanceFromCenter = Core.norm(new MatOfPoint(frameCenter), new MatOfPoint(contourCenter));
 
             // filter : distance of contour center and frame center
             if (100 < distanceFromCenter)
@@ -195,13 +193,12 @@ public class ArSudokuSolver {
 //            if (ratio < 0.5 || 1.5 < ratio)
 //                continue;
 
-
             // save
-            sudokuContour = contour;
             maxArea = rect.area();
+            sudokuContour = contour;
         }
 
-        // calculate center of contour using moment
+        // calculate center of sudoku contour using moment
         Moments moments = Imgproc.moments(sudokuContour, false);
         int x = (int) (moments.get_m10() / moments.get_m00());
         int y = (int) (moments.get_m01() / moments.get_m00());
@@ -209,7 +206,7 @@ public class ArSudokuSolver {
 
         if (VIEW_PROGRESS) {
             Imgproc.circle(raw, contourCenter, 10, new Scalar(0, 0, 255), -1);
-            Imgproc.circle(raw, rawCenter, 10, new Scalar(255, 0, 0), -1);
+            Imgproc.circle(raw, frameCenter, 10, new Scalar(255, 0, 0), -1);
         }
 
         // calculate convex hull of contour
@@ -302,32 +299,61 @@ public class ArSudokuSolver {
                 Imgproc.circle(raw, bottomRight, 10, new Scalar(0, 0, 255), 2);
             }
 
-            // perspective transform with sudoku contour
+            // calculate perspective transformer
             Mat before = new MatOfPoint2f(topLeft, topRight, bottomLeft, bottomRight);
             Mat after = new MatOfPoint2f(new Point(0, 0), new Point(proc.cols(), 0),
                     new Point(0, proc.rows()), new Point(proc.cols(), proc.rows()));
             Mat perspectiveTransformer = Imgproc.getPerspectiveTransform(before, after);
+
+            // perspective transform with processing sudoku contour
             Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
             Imgproc.resize(proc, proc, new Size(28 * 9, 28 * 9));
             if (VIEW_PROGRESS)
                 HighGui.imshow("transform", proc);
+
+            // split mat into 9 * 9
+            Mat[] elements = new Mat[9 * 9];
+            int offset = 28;
+            int index = 0;
+            for (int i = 0; i < 9 * offset; i += offset) {
+                for (int j = 0; j < 9 * offset; j += offset)
+                    elements[index++] = proc.rowRange(i, i + offset).colRange(j, j + offset);
+            }
+
+//            for (Mat cur : elements) {
+//                HighGui.imshow("elements", cur);
+//                HighGui.waitKey(0);
+//            }
+
+            String savePath = "C:\\inz\\lib\\sudoku_train_data";
+            int idx = 0;
+            for (int row = 0; row < 3; ++row) {
+                // first line
+                for (int i = 0; i < 3; ++i) {
+                    Imgcodecs.imwrite(savePath + "\\1\\" + Math.random() + ".jpg", elements[idx++]);
+                    Imgcodecs.imwrite(savePath + "\\2\\" + Math.random() + ".jpg", elements[idx++]);
+                    Imgcodecs.imwrite(savePath + "\\3\\" + Math.random() + ".jpg", elements[idx++]);
+                }
+
+                // second line
+                for (int i = 0; i < 3; ++i) {
+                    Imgcodecs.imwrite(savePath + "\\4\\" + Math.random() + ".jpg", elements[idx++]);
+                    Imgcodecs.imwrite(savePath + "\\5\\" + Math.random() + ".jpg", elements[idx++]);
+                    Imgcodecs.imwrite(savePath + "\\6\\" + Math.random() + ".jpg", elements[idx++]);
+                }
+
+                // third line
+                for (int i = 0; i < 3; ++i) {
+                    Imgcodecs.imwrite(savePath + "\\7\\" + Math.random() + ".jpg", elements[idx++]);
+                    Imgcodecs.imwrite(savePath + "\\8\\" + Math.random() + ".jpg", elements[idx++]);
+                    Imgcodecs.imwrite(savePath + "\\9\\" + Math.random() + ".jpg", elements[idx++]);
+                }
+            }
+
+            System.out.println("save 81 elements to image");
         } catch (Exception e) {
             // empty
         }
-
-        // split mat into 9 * 9
-//        Mat[] elements = new Mat[9 * 9];
-//        int offset = 28;
-//        int index = 0;
-//        for (int i = 0; i < 9 * offset; i += offset) {
-//            for (int j = 0; j < 9 * offset; j += offset)
-//                elements[index++] = proc.rowRange(i, i + offset).colRange(j, j + offset);
-//        }
-
-//        for (Mat cur : elements) {
-//            HighGui.imshow("res", cur);
-//            HighGui.waitKey(fps);
-//        }
 
         HighGui.imshow("cam", raw);
         HighGui.waitKey(fps);
