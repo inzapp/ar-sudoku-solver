@@ -2,6 +2,7 @@
   <dictionary name="inzapp">
     <words>
       <w>cccsudoku</w>
+      <w>mnist</w>
     </words>
   </dictionary>
 </component>
