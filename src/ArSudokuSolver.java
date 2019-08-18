@@ -77,12 +77,13 @@ class SudokuAlgorithmSolver {
 }
 
 public class ArSudokuSolver {
-    private static boolean VIEW_PROGRESS = true;
+    private static boolean VIEW_PROGRESS = false;
 
     static {
         System.load("C:\\inz\\lib\\opencv_java411.dll");
     }
 
+    // used for calculating 4 corner of sudoku contour
     private static class PointRank {
         PointRank(Point point) {
             this.point = point;
@@ -93,7 +94,6 @@ public class ArSudokuSolver {
     }
 
     public static void main(String[] args) {
-
         // train with video name and sudoku arr
         final int skipFrameCnt = 1;
         int cnt = 0;
@@ -186,8 +186,8 @@ public class ArSudokuSolver {
         }
 
         // find contours
-        List<MatOfPoint> contourList = new ArrayList<>();
-        Imgproc.findContours(proc, contourList, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
+        List<MatOfPoint> contours = new ArrayList<>();
+        Imgproc.findContours(proc, contours, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
 
         // calculate center of raw img
         Point frameCenter = new Point(raw.width() / 2, raw.height() / 2);
@@ -196,7 +196,7 @@ public class ArSudokuSolver {
         double maxArea = 0;
         MatOfPoint sudokuContour = new MatOfPoint();
         int rawResolution = raw.rows() * raw.cols();
-        for (MatOfPoint contour : contourList) {
+        for (MatOfPoint contour : contours) {
             Rect rect = Imgproc.boundingRect(contour);
 
             // filter : area
@@ -245,18 +245,20 @@ public class ArSudokuSolver {
             MatOfInt hull = new MatOfInt();
             Imgproc.convexHull(sudokuContour, hull);
 
-            // convert contour to array
-            Point[] contourArray = sudokuContour.toArray();
-
             // get hull idx list
-            List<Integer> hullIdxList = hull.toList();
+            Point[] contourArray = sudokuContour.toArray();
+            Point[] hullPoints = new Point[hull.rows()];
 
             // copy hull point to array
-            List<MatOfPoint> hullList = new ArrayList<>();
-            for (int cur : hullIdxList)
-                hullList.add(new MatOfPoint(contourArray[cur]));
+            List<Integer> hullContourIdxList = hull.toList();
+            for (int i = 0; i < hullContourIdxList.size(); i++)
+                hullPoints[i] = contourArray[hullContourIdxList.get(i)];
 
-            // draw hull as contour
+            // convert hull to list
+            List<MatOfPoint> hullList = new ArrayList<>();
+            hullList.add(new MatOfPoint(hullPoints));
+
+            // draw hull
             if (VIEW_PROGRESS)
                 Imgproc.drawContours(raw, hullList, 0, new Scalar(0, 255, 0), 2);
         } catch (Exception e) {
@@ -415,8 +417,43 @@ public class ArSudokuSolver {
                     System.out.print(cur + " ");
                 System.out.println();
             }
-
             System.out.println();
+
+            // get perspective transformation of raw sudoku area
+            Mat rawPerspective = new Mat();
+            Imgproc.warpPerspective(raw, rawPerspective, perspectiveTransformer, raw.size());
+
+            Mat inverseTransformer = Imgproc.getPerspectiveTransform(after, before);
+            Imgproc.warpPerspective(rawPerspective, rawPerspective, inverseTransformer, raw.size());
+
+//            List<Mat> splits = new ArrayList<>();
+//            Core.split(rawPerspective, splits);
+//            Mat alphaChannel = Mat.zeros(rawPerspective.size(), CvType.CV_8UC1);
+//            for (int row = 0; row < alphaChannel.rows(); ++row) {
+//                for (int col = 0; col < alphaChannel.cols(); ++col) {
+//                    if (rawPerspective.get(row, col)[0] != 0)
+//                        continue;
+//                    if (rawPerspective.get(row, col)[1] != 0)
+//                        continue;
+//                    if (rawPerspective.get(row, col)[2] != 0)
+//                        continue;
+
+//                    alphaChannel.put(row, col, 255);
+//                }
+//            }
+//            splits.add(alphaChannel);
+//            rawPerspective.convertTo(rawPerspective, CvType.CV_8UC4);
+//            Core.merge(splits, rawPerspective);
+            HighGui.imshow("inverse", rawPerspective);
+
+            // convert answer to 28 * 28 transparent mat image
+            Imgproc.putText(rawPerspective, "wow", new Point(300, 300), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 0), 2);
+
+            // overlap answer number to raw perspective
+            // using core add weighted
+
+            double alpha = 0.5;
+            Core.addWeighted(rawPerspective, alpha, raw, 1 - alpha, 0.0, raw);
         } catch (Exception e) {
             // empty
         }
