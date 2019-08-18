@@ -245,20 +245,18 @@ public class ArSudokuSolver {
             MatOfInt hull = new MatOfInt();
             Imgproc.convexHull(sudokuContour, hull);
 
-            // get hull idx list
+            // convert contour to array
             Point[] contourArray = sudokuContour.toArray();
-            Point[] hullPoints = new Point[hull.rows()];
+
+            // get hull idx list
+            List<Integer> hullIdxList = hull.toList();
 
             // copy hull point to array
-            List<Integer> hullContourIdxList = hull.toList();
-            for (int i = 0; i < hullContourIdxList.size(); i++)
-                hullPoints[i] = contourArray[hullContourIdxList.get(i)];
-
-            // convert hull to list
             List<MatOfPoint> hullList = new ArrayList<>();
-            hullList.add(new MatOfPoint(hullPoints));
+            for (int cur : hullIdxList)
+                hullList.add(new MatOfPoint(contourArray[cur]));
 
-            // draw hull
+            // draw hull as contour
             if (VIEW_PROGRESS)
                 Imgproc.drawContours(raw, hullList, 0, new Scalar(0, 255, 0), 2);
         } catch (Exception e) {
@@ -369,7 +367,7 @@ public class ArSudokuSolver {
 //            }
 //            System.out.println("save success");
 
-            // load nn model
+            // load model
             ANN_MLP model = ANN_MLP.load("model.xml");
             Mat res = new Mat();
             Mat sudokuArrMat = new Mat();
@@ -380,7 +378,7 @@ public class ArSudokuSolver {
                     cur.put(0, col, cur.get(0, col)[0] / 255.0f);
                 model.predict(cur, res);
 
-                // max col is result of neural network recognition
+                // max col is result of model recognition
                 int maxCol = -1;
                 double max = -1;
                 for (int col = 0; col < res.cols(); ++col) {
@@ -391,6 +389,7 @@ public class ArSudokuSolver {
                     }
                 }
 
+                // push back to mat
                 Mat curValMat = new Mat(1, 1, CvType.CV_32S);
                 curValMat.put(0, 0, new int[]{maxCol});
                 sudokuArrMat.push_back(curValMat);
