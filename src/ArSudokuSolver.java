@@ -411,7 +411,7 @@ public class ArSudokuSolver {
             int[][] sudokuAnswer = new SudokuAlgorithmSolver().getAnswer(sudokuArr);
             // goto catch if answer is null
 
-            // print res
+            // print sudoku answer
             for (int[] row : sudokuAnswer) {
                 for (int cur : row)
                     System.out.print(cur + " ");
@@ -420,40 +420,48 @@ public class ArSudokuSolver {
             System.out.println();
 
             // get perspective transformation of raw sudoku area
-            Mat rawPerspective = new Mat();
-            Imgproc.warpPerspective(raw, rawPerspective, perspectiveTransformer, raw.size());
+            Mat perspective = new Mat();
+            Imgproc.warpPerspective(raw, perspective, perspectiveTransformer, raw.size());
+            Imgproc.resize(perspective, perspective, new Size(480, 480));
 
+            // add perspective to answer text
+            int rowOffset = perspective.rows() / 9;
+            int colOffset = perspective.cols() / 9;
+            for (int row = 0; row < perspective.rows(); row += rowOffset) {
+                for (int col = 0; col < perspective.cols(); col += colOffset) {
+                    Imgproc.putText(perspective, String.valueOf(sudokuAnswer[0][0]), new Point(row + 15, col - 10), Imgproc.FONT_HERSHEY_PLAIN, 3.14, new Scalar(0, 255, 0), 3);
+                }
+            }
+            Imgproc.resize(perspective, perspective, raw.size());
+
+            HighGui.imshow("perspective", perspective);
+
+            // get inverse transform
+            Mat inverse = new Mat();
             Mat inverseTransformer = Imgproc.getPerspectiveTransform(after, before);
-            Imgproc.warpPerspective(rawPerspective, rawPerspective, inverseTransformer, raw.size());
+            Imgproc.warpPerspective(perspective, inverse, inverseTransformer, raw.size());
 
-//            List<Mat> splits = new ArrayList<>();
-//            Core.split(rawPerspective, splits);
-//            Mat alphaChannel = Mat.zeros(rawPerspective.size(), CvType.CV_8UC1);
-//            for (int row = 0; row < alphaChannel.rows(); ++row) {
-//                for (int col = 0; col < alphaChannel.cols(); ++col) {
-//                    if (rawPerspective.get(row, col)[0] != 0)
-//                        continue;
-//                    if (rawPerspective.get(row, col)[1] != 0)
-//                        continue;
-//                    if (rawPerspective.get(row, col)[2] != 0)
-//                        continue;
+            Imgproc.cvtColor(inverse, inverse, Imgproc.COLOR_BGR2BGRA);
+            for (int row = 0; row < inverse.rows(); ++row) {
+                for (int col = 0; col < perspective.cols(); ++col) {
+//                    System.out.println();
+                    if (perspective.get(row, col)[0] != 0)
+                        continue;
+                    if (perspective.get(row, col)[1] != 0)
+                        continue;
+                    if (perspective.get(row, col)[2] != 0)
+                        continue;
 
-//                    alphaChannel.put(row, col, 255);
-//                }
-//            }
-//            splits.add(alphaChannel);
-//            rawPerspective.convertTo(rawPerspective, CvType.CV_8UC4);
-//            Core.merge(splits, rawPerspective);
-            HighGui.imshow("inverse", rawPerspective);
+                    inverse.put(row, col, 255, 255, 255, 0);
+                }
+            }
 
-            // convert answer to 28 * 28 transparent mat image
-            Imgproc.putText(rawPerspective, "wow", new Point(300, 300), Imgproc.FONT_HERSHEY_PLAIN, 2, new Scalar(0, 255, 0), 2);
-
-            // overlap answer number to raw perspective
-            // using core add weighted
-
-            double alpha = 0.5;
-            Core.addWeighted(rawPerspective, alpha, raw, 1 - alpha, 0.0, raw);
+            // overlay answer number to raw perspective
+            Imgproc.cvtColor(raw, raw, Imgproc.COLOR_BGR2BGRA);
+            double alpha = 0.8;
+            Core.addWeighted(inverse, alpha, raw, 1 - alpha, 0.0, raw);
+//            Imgproc.cvtColor(rawPerspective, rawPerspective, Imgproc.COLOR_BGRA2BGR);
+            Imgproc.cvtColor(raw, raw, Imgproc.COLOR_BGRA2BGR);
         } catch (Exception e) {
             // empty
         }
