@@ -106,7 +106,7 @@ public class ArSudokuSolver {
     private static boolean VIEW_PROGRESS = false;
 
     static {
-        System.load("C:\\inz\\lib\\opencv_java411.dll");
+        System.load("C:\\inz\\lib\\opencv\\opencv_java410.dll");
     }
 
     // used for calculating 4 corner of sudoku contour
@@ -121,7 +121,7 @@ public class ArSudokuSolver {
 
     public static void main(String[] args) {
         // train with video name and sudoku arr
-        final int skipFrameCnt = 1;
+        final int skipFrameCnt = 4;
         int cnt = 0;
 //        VideoCapture vc = new VideoCapture("C:\\inz\\lib\\sudoku_train_video_answer" + "\\" + videoName);
         VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
@@ -400,25 +400,9 @@ public class ArSudokuSolver {
             Mat res = new Mat();
             Mat sudokuArrMat = new Mat();
             for (Mat cur : elements) {
-                cur.convertTo(cur, CvType.CV_32FC1);
+                cur.convertTo(cur, CvType.CV_32FC1, 1 / 255.0f);
                 cur = cur.reshape(cur.channels(), 1);
-//                Core.normalize(cur, cur, 1, 0, Core.NORM_L2);
-
-                // TODO : 신경망 훈련 후 스케일링 방식 교체
-                for (int col = 0; col < cur.cols(); ++col)
-                    cur.put(0, col, cur.get(0, col)[0] / 255.0f);
-                model.predict(cur, res);
-
-                // max col is result of model recognition
-                int maxCol = -1;
-                double max = -1;
-                for (int col = 0; col < res.cols(); ++col) {
-                    double curVal = res.get(0, col)[0];
-                    if (max < curVal) {
-                        max = curVal;
-                        maxCol = col;
-                    }
-                }
+                int maxCol = (int) model.predict(cur, res);
 
                 // push back to mat
                 Mat curValMat = new Mat(1, 1, CvType.CV_32S);
@@ -426,9 +410,12 @@ public class ArSudokuSolver {
                 sudokuArrMat.push_back(curValMat);
             }
 
-            // reshape to 1 row
+            sudokuArrMat = sudokuArrMat.reshape(0, 9);
+            System.out.println(sudokuArrMat.dump());
 
+            // reshape to 1 row
             sudokuArrMat = sudokuArrMat.reshape(sudokuArrMat.channels(), 1);
+            System.out.println(sudokuArrMat.dump());
 
             // convert mat to int arr
             int[] unsolvedSudoku = new int[sudokuArrMat.rows() * sudokuArrMat.cols()];
@@ -464,7 +451,9 @@ public class ArSudokuSolver {
                 }
             }
             Imgproc.resize(perspective, perspective, raw.size());
-            HighGui.imshow("perspective", perspective);
+
+            if(VIEW_PROGRESS)
+                HighGui.imshow("perspective", perspective);
 
             // get inverse transform
             Mat inverse = new Mat();
@@ -492,6 +481,7 @@ public class ArSudokuSolver {
             Imgproc.cvtColor(raw, raw, Imgproc.COLOR_BGRA2BGR);
         } catch (Exception e) {
             // empty
+            e.printStackTrace();
         }
 
         HighGui.imshow("cam", raw);
