@@ -25,7 +25,7 @@ class SudokuAlgorithmSolver {
     private boolean[][] checkRow = new boolean[9][10];
     private boolean[][] checkBox = new boolean[9][10];
 
-    private int[][] solve(int[][] sudoku, int cnt, ArrayList<Node> nodes, int idx) {
+    private int[][] solve(int[][] sudoku, int cnt, List<Node> nodes, int idx) {
         if (cnt <= idx)
             return sudoku;
         Node node = nodes.get(idx);
@@ -52,12 +52,13 @@ class SudokuAlgorithmSolver {
             checkRow[node.y][i] = false;
             checkBox[(node.x / 3) * 3 + (node.y) / 3][i] = false;
         }
+
         return null;
     }
 
-    private int[][] getAnswer2d(int[][] sudoku) {
+    int[][] getAnswer2d(int[][] sudoku) {
         int cnt = 0;
-        ArrayList<Node> nodes = new ArrayList<>();
+        List<Node> nodes = new ArrayList<>();
 
         for (int i = 0; i < 9; ++i) {
             for (int j = 0; j < 9; ++j) {
@@ -371,12 +372,16 @@ public class ArSudokuSolver {
                 HighGui.imshow("transform", proc);
 
             // split mat into 9 * 9
-            Mat[] elements = new Mat[9 * 9];
+            Mat[][] elements = new Mat[9][9];
             int offset = 28;
-            int index = 0;
-            for (int i = 0; i < 9 * offset; i += offset) {
-                for (int j = 0; j < 9 * offset; j += offset)
-                    elements[index++] = proc.rowRange(i, i + offset).colRange(j, j + offset);
+            int i=0, j=0;
+            for (int row = 0; row < 9 * offset; row += offset) {
+                for (int col = 0; col < 9 * offset; col += offset) {
+                    elements[i][j] = proc.rowRange(row, row + offset).colRange(col, col + offset);
+                    j++;
+                }
+                j = 0;
+                i++;
             }
 
             // save with custom array
@@ -398,33 +403,45 @@ public class ArSudokuSolver {
             // load model
             ANN_MLP model = ANN_MLP.load("model.xml");
             Mat res = new Mat();
+            int[][] unsolvedSudoku = new int[9][9];
             Mat sudokuArrMat = new Mat();
-            for (Mat cur : elements) {
-                cur.convertTo(cur, CvType.CV_32FC1, 1 / 255.0f);
-                cur = cur.reshape(cur.channels(), 1);
-                int maxCol = (int) model.predict(cur, res);
+            for (i = 0; i < elements.length; ++i) {
+                for (j = 0; j < elements[i].length; ++j) {
+                    Mat cur = elements[i][j];
+                    cur.convertTo(cur, CvType.CV_32FC1, 1 / 255.0f);
+                    cur = cur.reshape(cur.channels(), 1);
+                    int maxCol = (int) model.predict(cur, res);
+                    unsolvedSudoku[i][j] = maxCol;
 
-                // push back to mat
-                Mat curValMat = new Mat(1, 1, CvType.CV_32S);
-                curValMat.put(0, 0, new int[]{maxCol});
-                sudokuArrMat.push_back(curValMat);
+                    // push back to mat
+//                    Mat curValMat = new Mat(1, 1, CvType.CV_32S);
+//                    curValMat.put(0, 0, new int[]{maxCol});
+//                    sudokuArrMat.push_back(curValMat);
+                }
             }
 
-            sudokuArrMat = sudokuArrMat.reshape(0, 9);
-            System.out.println(sudokuArrMat.dump());
+            for(int[] row : unsolvedSudoku) {
+                for(int cur : row) {
+                    System.out.print(cur + " ");
+                }
+                System.out.println();
+            }
+            System.out.println();
+//            sudokuArrMat = sudokuArrMat.reshape(0, 9);
+//            System.out.println(sudokuArrMat.dump());
 
             // reshape to 1 row
-            sudokuArrMat = sudokuArrMat.reshape(sudokuArrMat.channels(), 1);
-            System.out.println(sudokuArrMat.dump());
+//            sudokuArrMat = sudokuArrMat.reshape(sudokuArrMat.channels(), 1);
+//            System.out.println(sudokuArrMat.dump());
 
             // convert mat to int arr
-            int[] unsolvedSudoku = new int[sudokuArrMat.rows() * sudokuArrMat.cols()];
-            for (int col = 0; col < sudokuArrMat.cols(); ++col) {
-                unsolvedSudoku[col] = (int) sudokuArrMat.get(0, col)[0];
-            }
+//            int[] unsolvedSudoku = new int[sudokuArrMat.rows() * sudokuArrMat.cols()];
+//            for (int col = 0; col < sudokuArrMat.cols(); ++col) {
+//                unsolvedSudoku[col] = (int) sudokuArrMat.get(0, col)[0];
+//            }
 
             // calculate sudoku answer
-            int[] sudokuAnswer = new SudokuAlgorithmSolver().getAnswer(unsolvedSudoku);
+            int[][] solvedSudoku = new SudokuAlgorithmSolver().getAnswer2d(unsolvedSudoku);
             // goto catch if answer is null
 
             // print sudoku answer
@@ -442,17 +459,20 @@ public class ArSudokuSolver {
             // add perspective to answer text
             int rowOffset = perspective.rows() / 9;
             int colOffset = perspective.cols() / 9;
-            int idx = 0;
+            i = 0;
+            j = 0;
             for (int row = 0; row < rowOffset * 9; row += rowOffset) {
                 for (int col = 0; col < colOffset * 9; col += colOffset) {
 //                    if(unsolvedSudoku[idx] == 0)
-                        Imgproc.putText(perspective, String.valueOf(sudokuAnswer[idx]), new Point(row + 11, col + 42), Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(0, 255, 0), 3);
-                    ++idx;
+                    Imgproc.putText(perspective, String.valueOf(solvedSudoku[i][j]), new Point(row + 11, col + 42), Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(0, 255, 0), 3);
+                    j++;
                 }
+                j = 0;
+                i++;
             }
             Imgproc.resize(perspective, perspective, raw.size());
 
-            if(VIEW_PROGRESS)
+            if (VIEW_PROGRESS)
                 HighGui.imshow("perspective", perspective);
 
             // get inverse transform
