@@ -61,20 +61,27 @@ class SudokuAlgorithmSolver {
         int cnt = 0;
         List<Node> nodes = new ArrayList<>();
 
+        int[][] unsolvedSudoku = new int[9][9];
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j) {
+                unsolvedSudoku[i][j] = sudoku[i][j];
+            }
+        }
+
         for (int i = 0; i < 9; ++i) {
             for (int j = 0; j < 9; ++j) {
                 if (sudoku[i][j] == 0) {
                     ++cnt;
                     nodes.add(new Node(i, j));
                 } else {
-                    checkCol[i][sudoku[i][j]] = true;
-                    checkRow[j][sudoku[i][j]] = true;
-                    checkBox[(i / 3) * 3 + (j / 3)][sudoku[i][j]] = true;
+                    checkCol[i][unsolvedSudoku[i][j]] = true;
+                    checkRow[j][unsolvedSudoku[i][j]] = true;
+                    checkBox[(i / 3) * 3 + (j / 3)][unsolvedSudoku[i][j]] = true;
                 }
             }
         }
 
-        return solve(sudoku, cnt, nodes, 0);
+        return solve(unsolvedSudoku, cnt, nodes, 0);
     }
 
     int[] getAnswer(int[] unsolved1d) {
@@ -460,7 +467,7 @@ public class ArSudokuSolver {
             for (int i = 0; i < 9; ++i) {
                 for (int j = 0; j < 9; ++j) {
                     if (unsolvedSudoku[i][j] == 0)
-                        Imgproc.putText(perspective, String.valueOf(solvedSudoku[i][j]), new Point(j * colOffset + 16, i * rowOffset + 39), Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(0, 255, 0), 3);
+                    Imgproc.putText(perspective, String.valueOf(solvedSudoku[i][j]), new Point(j * colOffset + 16, i * rowOffset + 39), Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(0, 255, 0), 3);
                 }
             }
             Imgproc.resize(perspective, perspective, raw.size());
