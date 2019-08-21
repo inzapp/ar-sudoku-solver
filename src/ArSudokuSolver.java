@@ -28,6 +28,7 @@ class SudokuAlgorithmSolver {
     private int[][] solve(int[][] sudoku, int cnt, List<Node> nodes, int idx) {
         if (cnt <= idx)
             return sudoku;
+
         Node node = nodes.get(idx);
 
         // brute force 1 ~ 9
@@ -372,16 +373,27 @@ public class ArSudokuSolver {
                 HighGui.imshow("transform", proc);
 
             // split mat into 9 * 9
+//            Mat[][] elements = new Mat[9][9];
+//            int offset = 28;
+//            int i = 0, j = 0;
+//            for (int row = 0; row < 9 * offset; row += offset) {
+//                for (int col = 0; col < 9 * offset; col += offset) {
+//                    elements[i][j] = proc.rowRange(row, row + offset).colRange(col, col + offset);
+//                    j++;
+//                }
+//                j = 0;
+//                i++;
+//            }
+
             Mat[][] elements = new Mat[9][9];
             int offset = 28;
-            int i=0, j=0;
-            for (int row = 0; row < 9 * offset; row += offset) {
-                for (int col = 0; col < 9 * offset; col += offset) {
-                    elements[i][j] = proc.rowRange(row, row + offset).colRange(col, col + offset);
-                    j++;
+            for (int i = 0; i < 9; ++i) {
+                for (int j = 0; j < 9; ++j) {
+                    elements[i][j] = proc.rowRange(i * offset, i * offset + offset).colRange(j * offset, j * offset + offset);
+//                    j++;
                 }
-                j = 0;
-                i++;
+//                j = 0;
+//                i++;
             }
 
             // save with custom array
@@ -405,8 +417,8 @@ public class ArSudokuSolver {
             Mat res = new Mat();
             int[][] unsolvedSudoku = new int[9][9];
             Mat sudokuArrMat = new Mat();
-            for (i = 0; i < elements.length; ++i) {
-                for (j = 0; j < elements[i].length; ++j) {
+            for (int i = 0; i < elements.length; ++i) {
+                for (int j = 0; j < elements[i].length; ++j) {
                     Mat cur = elements[i][j];
                     cur.convertTo(cur, CvType.CV_32FC1, 1 / 255.0f);
                     cur = cur.reshape(cur.channels(), 1);
@@ -420,11 +432,11 @@ public class ArSudokuSolver {
                 }
             }
 
-            for(int[] row : unsolvedSudoku) {
-                for(int cur : row) {
-                    System.out.print(cur + " ");
+            for (int[] row : unsolvedSudoku) {
+                for (int cur : row) {
+//                    System.out.print(cur + " ");
                 }
-                System.out.println();
+//                System.out.println();
             }
             System.out.println();
 //            sudokuArrMat = sudokuArrMat.reshape(0, 9);
@@ -442,13 +454,15 @@ public class ArSudokuSolver {
 
             // calculate sudoku answer
             int[][] solvedSudoku = new SudokuAlgorithmSolver().getAnswer2d(unsolvedSudoku);
-            // goto catch if answer is null
 
             // print sudoku answer
-//            for (int cur : sudokuAnswer) {
-//                System.out.print(cur + " ");
-//            }
-//            System.out.println();
+            for (int[] row : solvedSudoku) {
+                for (int cur : row) {
+                    System.out.print(cur + " ");
+                }
+                System.out.println();
+            }
+            System.out.println();
 
             // get perspective transformation of raw sudoku area
             Mat perspective = new Mat();
@@ -459,16 +473,11 @@ public class ArSudokuSolver {
             // add perspective to answer text
             int rowOffset = perspective.rows() / 9;
             int colOffset = perspective.cols() / 9;
-            i = 0;
-            j = 0;
-            for (int row = 0; row < rowOffset * 9; row += rowOffset) {
-                for (int col = 0; col < colOffset * 9; col += colOffset) {
-//                    if(unsolvedSudoku[idx] == 0)
-                    Imgproc.putText(perspective, String.valueOf(solvedSudoku[i][j]), new Point(row + 11, col + 42), Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(0, 255, 0), 3);
-                    j++;
+            for (int i = 0; i < 9; ++i) {
+                for (int j = 0; j < 9; ++j) {
+//                    if (unsolvedSudoku[i][j] == 0)
+                        Imgproc.putText(perspective, String.valueOf(solvedSudoku[i][j]), new Point(j * colOffset + 16, i * rowOffset + 39), Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(0, 255, 0), 3);
                 }
-                j = 0;
-                i++;
             }
             Imgproc.resize(perspective, perspective, raw.size());
 
