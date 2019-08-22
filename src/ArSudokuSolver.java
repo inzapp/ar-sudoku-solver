@@ -30,8 +30,17 @@ class SudokuAlgorithmSolver {
     private boolean[][] checkBox = new boolean[9][10];
 
     private int[][] solve(int[][] sudoku, int cnt, List<Node> nodes, int idx) {
-        if (cnt <= idx)
+        if (cnt <= idx) {
+            if (pRes.VIEW_PROGRESS) {
+                for (int[] row : sudoku) {
+                    for (int cur : row)
+                        System.out.print(cur + " ");
+                    System.out.println();
+                }
+            }
             return sudoku;
+        }
+
 
         Node node = nodes.get(idx);
 
@@ -268,13 +277,68 @@ class ConvexHullToContourConverter {
     }
 }
 
-class SudokuAnswerRenderer {
-    Mat toFrontPerspective(Point[] corners, Size size) {
-        return new Mat();
+class SudokuArrayConverter {
+    private ANN_MLP model;
+
+    SudokuArrayConverter() {
+        model = ANN_MLP.load("model.xml");
     }
 
-    Mat toOriginalPerspective() {
-        return new Mat();
+    int[][] convert(Mat perspectiveTransformer, Mat proc) {
+        // perspective transform with processing sudoku contour
+        Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
+
+        // resize to (28 * 9) * (28 * 9) : 28 is column of train data
+        Imgproc.resize(proc, proc, new Size(28 * 9, 28 * 9));
+        if (pRes.VIEW_PROGRESS)
+            HighGui.imshow("transform", proc);
+
+        // split mat into 9 * 9
+        Mat[][] elements = new Mat[9][9];
+        int offset = 28;
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j)
+                elements[i][j] = proc.rowRange(i * offset, i * offset + offset).colRange(j * offset, j * offset + offset);
+        }
+
+        Mat res = new Mat();
+        int[][] unsolvedSudoku = new int[9][9];
+        for (int i = 0; i < elements.length; ++i) {
+            for (int j = 0; j < elements[i].length; ++j) {
+                Mat cur = elements[i][j];
+                cur.convertTo(cur, CvType.CV_32FC1, 1 / 255.0f);
+                cur = cur.reshape(cur.channels(), 1);
+                unsolvedSudoku[i][j] = (int) model.predict(cur, res);
+            }
+        }
+
+        // print unsolved sudoku
+        if (pRes.VIEW_PROGRESS) {
+            for (int[] row : unsolvedSudoku) {
+                for (int cur : row)
+                    System.out.print(cur + " ");
+                System.out.println();
+            }
+            System.out.println();
+        }
+
+        return unsolvedSudoku;
+    }
+
+    Mat[] getPerspectiveTransformers(Point[] corners, Mat proc) {
+        // calculate perspective transformer
+        Mat before = new MatOfPoint2f(corners[0], corners[1], corners[2], corners[3]);
+        Mat after = new MatOfPoint2f(new Point(0, 0), new Point(proc.cols(), 0),
+                new Point(0, proc.rows()), new Point(proc.cols(), proc.rows()));
+        Mat perspectiveTransformer = Imgproc.getPerspectiveTransform(before, after);
+        Mat inverseTransformer = Imgproc.getPerspectiveTransform(after, before);
+        return new Mat[]{perspectiveTransformer, inverseTransformer};
+    }
+}
+
+class SudokuAnswerRenderer {
+    Mat render() {
+
     }
 }
 
@@ -320,70 +384,21 @@ public class ArSudokuSolver {
         // 널포인터 주의
         Point[] corners = new SudokuCornerExtractor().extract(sudokuContour, raw);
 
-        
+
+        Mat[] perspectiveTransformers = new SudokuArrayConverter().getPerspectiveTransformers(corners, proc);
+
+        Mat perspectiveTransformer = perspectiveTransformers[0];
+
+        Mat inverseTransformer = perspectiveTransformers[1];
+
+        // model 중첩 로딩
+        int[][] unsolvedSudoku = new SudokuArrayConverter().convert(perspectiveTransformer, proc);
+
+        // calculate sudoku answer
+        int[][] solvedSudoku = new SudokuAlgorithmSolver().getAnswer2d(unsolvedSudoku);
+
+
         try {
-            // calculate perspective transformer
-            Mat before = new MatOfPoint2f(corners[0], corners[1], corners[2], corners[3]);
-            Mat after = new MatOfPoint2f(new Point(0, 0), new Point(proc.cols(), 0),
-                    new Point(0, proc.rows()), new Point(proc.cols(), proc.rows()));
-            Mat perspectiveTransformer = Imgproc.getPerspectiveTransform(before, after);
-
-            // perspective transform with processing sudoku contour
-            Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
-
-            // resize to (28 * 9) * (28 * 9) : 28 is column of train data
-            Imgproc.resize(proc, proc, new Size(28 * 9, 28 * 9));
-            if (pRes.VIEW_PROGRESS)
-                HighGui.imshow("transform", proc);
-
-            // split mat into 9 * 9
-            Mat[][] elements = new Mat[9][9];
-            int offset = 28;
-            for (int i = 0; i < 9; ++i) {
-                for (int j = 0; j < 9; ++j)
-                    elements[i][j] = proc.rowRange(i * offset, i * offset + offset).colRange(j * offset, j * offset + offset);
-            }
-
-            // load model
-            ANN_MLP model = ANN_MLP.load("model.xml");
-            Mat res = new Mat();
-            int[][] unsolvedSudoku = new int[9][9];
-            for (int i = 0; i < elements.length; ++i) {
-                for (int j = 0; j < elements[i].length; ++j) {
-                    Mat cur = elements[i][j];
-                    cur.convertTo(cur, CvType.CV_32FC1, 1 / 255.0f);
-                    cur = cur.reshape(cur.channels(), 1);
-                    int maxCol = (int) model.predict(cur, res);
-                    unsolvedSudoku[i][j] = maxCol;
-                }
-            }
-
-            // print unsolved sudoku
-            if (pRes.VIEW_PROGRESS) {
-                for (int[] row : unsolvedSudoku) {
-                    for (int cur : row) {
-                        System.out.print(cur + " ");
-                    }
-                    System.out.println();
-                }
-                System.out.println();
-            }
-
-            // calculate sudoku answer
-            int[][] solvedSudoku = new SudokuAlgorithmSolver().getAnswer2d(unsolvedSudoku);
-
-            // print sudoku answer
-            if (pRes.VIEW_PROGRESS) {
-                for (int[] row : solvedSudoku) {
-                    for (int cur : row) {
-                        System.out.print(cur + " ");
-                    }
-                    System.out.println();
-                }
-                System.out.println();
-            }
-
-
             // get perspective transformation of raw sudoku area
             Mat perspective = new Mat();
             Imgproc.warpPerspective(raw, perspective, perspectiveTransformer, raw.size());
