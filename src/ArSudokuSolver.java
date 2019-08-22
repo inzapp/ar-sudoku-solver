@@ -265,7 +265,6 @@ class ConvexHullToContourConverter {
             List<MatOfPoint> hullList = new ArrayList<>();
             hullList.add(new MatOfPoint(hullPoints));
 
-
 //            if(!pRes.VIEW_PROGRESS)
             // draw hull
             Imgproc.drawContours(raw, hullList, 0, new Scalar(0, 255, 0), 2);
