@@ -67,9 +67,8 @@ class SudokuAlgorithmSolver {
 
         int[][] unsolvedSudoku = new int[9][9];
         for (int i = 0; i < 9; ++i) {
-            for (int j = 0; j < 9; ++j) {
+            for (int j = 0; j < 9; ++j)
                 unsolvedSudoku[i][j] = sudoku[i][j];
-            }
         }
 
         for (int i = 0; i < 9; ++i) {
@@ -100,7 +99,7 @@ class SudokuCornerExtractor {
         Point point;
     }
 
-    public Point[] extract(MatOfPoint sudokuContour, Mat raw) {
+    Point[] extract(MatOfPoint sudokuContour, Mat raw) {
         // find 4 corner of sudoku contour to perspective transform
         // copy points to point rank and sort
         try {
@@ -235,10 +234,10 @@ class SudokuContourFinder {
 
 class ConvexHullToContourConverter {
     MatOfPoint convert(Mat raw, MatOfPoint sudokuContour) {
-        if(!pRes.VIEW_PROGRESS)
+        // 지우고
+        if (!pRes.VIEW_PROGRESS)
             return null;
 
-        // calculate convex hull of contour
         try {
             // convex hull
             MatOfInt hull = new MatOfInt();
@@ -257,6 +256,8 @@ class ConvexHullToContourConverter {
             List<MatOfPoint> hullList = new ArrayList<>();
             hullList.add(new MatOfPoint(hullPoints));
 
+
+//            if(!pRes.VIEW_PROGRESS)
             // draw hull
             Imgproc.drawContours(raw, hullList, 0, new Scalar(0, 255, 0), 2);
 
@@ -267,12 +268,44 @@ class ConvexHullToContourConverter {
     }
 }
 
-class PerspectiveTransformer {
+class SudokuAnswerRenderer {
+    Mat toFrontPerspective(Point[] corners, Size size) {
+        return new Mat();
+    }
 
+    Mat toOriginalPerspective() {
+        return new Mat();
+    }
 }
 
-class SudokuRenderer {
-    Mat render(Mat raw) {
+public class ArSudokuSolver {
+    private static boolean VIEW_PROGRESS = false;
+
+    static {
+        System.load("C:\\inz\\lib\\opencv\\opencv_java410.dll");
+    }
+
+    public static void main(String[] args) {
+        final int skipFrameCnt = 4;
+        int cnt = 0;
+        VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
+        ArSudokuSolver solver = new ArSudokuSolver();
+        Mat frame = new Mat();
+        while (vc.read(frame)) {
+            if (cnt != skipFrameCnt) {
+                ++cnt;
+                continue;
+            } else {
+                cnt = 0;
+            }
+            HighGui.imshow("cam", solver.render(frame));
+            HighGui.waitKey(1);
+        }
+
+        System.exit(0);
+    }
+
+    private Mat render(Mat raw) {
         Mat proc = raw.clone();
 
         preProcess(proc);
@@ -281,11 +314,13 @@ class SudokuRenderer {
 
         MatOfPoint sudokuContour = new SudokuContourFinder().find(raw, proc);
 
+        // 널주의
         MatOfPoint hullPoints = new ConvexHullToContourConverter().convert(raw, sudokuContour);
 
         // 널포인터 주의
         Point[] corners = new SudokuCornerExtractor().extract(sudokuContour, raw);
 
+        
         try {
             // calculate perspective transformer
             Mat before = new MatOfPoint2f(corners[0], corners[1], corners[2], corners[3]);
@@ -308,22 +343,6 @@ class SudokuRenderer {
                 for (int j = 0; j < 9; ++j)
                     elements[i][j] = proc.rowRange(i * offset, i * offset + offset).colRange(j * offset, j * offset + offset);
             }
-
-            // save with custom array
-//            for (Mat cur : elements) {
-//                HighGui.imshow("elements", cur);
-//                HighGui.waitKey(0);
-//            }
-
-            // only used in saving train data
-//            int idx = 0;
-//            String savePath = "C:\\inz\\lib\\sudoku_train_data";
-//            for (int i = 0; i < sudoku.length; ++i) {
-//                for (int j = 0; j < sudoku[i].length; ++j) {
-//                    Imgcodecs.imwrite(savePath + "\\" + sudoku[i][j] + "\\" + Math.random() + ".jpg", elements[idx++]);
-//                }
-//            }
-//            System.out.println("save success");
 
             // load model
             ANN_MLP model = ANN_MLP.load("model.xml");
@@ -445,88 +464,5 @@ class SudokuRenderer {
                 Imgproc.line(raw, pt1, pt2, new Scalar(255, 0, 0), 2, Imgproc.LINE_AA, 0);
             }
         }
-    }
-}
-
-public class ArSudokuSolver {
-    private static boolean VIEW_PROGRESS = false;
-
-    static {
-        System.load("C:\\inz\\lib\\opencv\\opencv_java410.dll");
-    }
-
-    // used for calculating 4 corner of sudoku contour
-    private static class PointRank {
-        PointRank(Point point) {
-            this.point = point;
-        }
-
-        int rank = 0;
-        Point point;
-    }
-
-    public static void main(String[] args) {
-        // train with video name and sudoku arr
-        final int skipFrameCnt = 4;
-        int cnt = 0;
-//        VideoCapture vc = new VideoCapture("C:\\inz\\lib\\sudoku_train_video_answer" + "\\" + videoName);
-        VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
-        SudokuRenderer renderer = new SudokuRenderer();
-        Mat frame = new Mat();
-        while (vc.read(frame)) {
-            if (cnt != skipFrameCnt) {
-                ++cnt;
-                continue;
-            } else {
-                cnt = 0;
-            }
-            HighGui.imshow("cam", renderer.render(frame));
-            HighGui.waitKey(1);
-        }
-
-        System.exit(0);
-
-//        String dirPath = "C:\\inz\\lib\\sudoku_train_video_answer";
-//        File[] files = new File("C:\\inz\\lib\\sudoku_train_video_answer").listFiles();
-//        for (File cur : files) {
-//            String[] splits = cur.getName().split("\\.");
-//            if (splits[1].equals("txt")) {
-//                try {
-//
-//                    // get sudoku arr
-//                    Scanner sc = new Scanner(new FileInputStream(cur.getAbsolutePath()));
-//                    int[][] sudoku = new int[9][9];
-//                    for (int i = 0; i < sudoku.length; ++i) {
-//                        for (int j = 0; j < sudoku[i].length; ++j) {
-//                            sudoku[i][j] = sc.nextInt();
-//                        }
-//                    }
-//
-//                    // get video name
-//                    String videoName = splits[0] + ".mp4";
-//                    System.out.println(videoName);
-//
-////                    // train with video name and sudoku arr
-////                    final int skipFrameCnt = 1;
-////                    int cnt = 0;
-////                    VideoCapture vc = new VideoCapture("C:\\inz\\lib\\sudoku_train_video_answer" + "\\" + videoName);
-//////                    VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
-////                    Mat frame = new Mat();
-////                    while (vc.read(frame)) {
-////                        if (cnt != skipFrameCnt) {
-////                            ++cnt;
-////                            continue;
-////                        } else {
-////                            cnt = 0;
-////                        }
-////                        process(frame, 1, sudoku);
-////                    }
-//
-//                    System.out.println();
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
     }
 }
