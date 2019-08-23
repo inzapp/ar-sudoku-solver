@@ -3,17 +3,20 @@ import org.opencv.highgui.HighGui;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 import org.opencv.ml.ANN_MLP;
+import org.opencv.ml.StatModel;
 import org.opencv.videoio.VideoCapture;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 class pRes {
-    public static boolean VIEW_PROGRESS = false;
+    static boolean VIEW_PROGRESS = true;
 }
 
 class SudokuAlgorithmSolver {
@@ -27,11 +30,11 @@ class SudokuAlgorithmSolver {
         }
     }
 
-    private boolean[][] checkCol = new boolean[9][10];
-    private boolean[][] checkRow = new boolean[9][10];
-    private boolean[][] checkBox = new boolean[9][10];
+    private boolean[][] checkCol;
+    private boolean[][] checkRow;
+    private boolean[][] checkBox;
 
-    private int[][] solve(int[][] sudoku, int cnt, List<Node> nodes, int idx) throws Exception{
+    private int[][] solve(int[][] sudoku, int cnt, List<Node> nodes, int idx) {
         if (cnt <= idx) {
             if (pRes.VIEW_PROGRESS) {
                 for (int[] row : sudoku) {
@@ -42,8 +45,6 @@ class SudokuAlgorithmSolver {
             }
             return sudoku;
         }
-
-
         Node node = nodes.get(idx);
 
         // brute force 1 ~ 9
@@ -72,9 +73,12 @@ class SudokuAlgorithmSolver {
         return null;
     }
 
-    int[][] getAnswer2d(int[][] sudoku) throws Exception {
+    int[][] getAnswer2d(int[][] sudoku) {
         int cnt = 0;
         List<Node> nodes = new ArrayList<>();
+        this.checkBox = new boolean[9][10];
+        this.checkCol = new boolean[9][10];
+        this.checkRow = new boolean[9][10];
 
         int[][] unsolvedSudoku = new int[9][9];
         for (int i = 0; i < 9; ++i) {
@@ -207,12 +211,8 @@ class SudokuContourFinder {
             if (rect.area() < rawResolution * 0.2 || rawResolution * 0.8 < rect.area())
                 continue;
 
-            // calculate center of contour using moment
-            Moments moments = Imgproc.moments(contour, false);
-            int x = (int) (moments.get_m10() / moments.get_m00());
-            int y = (int) (moments.get_m01() / moments.get_m00());
-            Point contourCenter = new Point(x, y);
-            double distanceFromCenter = Core.norm(new MatOfPoint(frameCenter), new MatOfPoint(contourCenter));
+            Point contourCenter = getCenterPoint(contour);
+            double distanceFromCenter = getDistance(frameCenter, contourCenter);
 
             // filter : distance of contour center and frame center
             if (100 < distanceFromCenter)
@@ -228,11 +228,7 @@ class SudokuContourFinder {
             sudokuContour = contour;
         }
 
-        // calculate center of sudoku contour using moment
-        Moments moments = Imgproc.moments(sudokuContour, false);
-        int x = (int) (moments.get_m10() / moments.get_m00());
-        int y = (int) (moments.get_m01() / moments.get_m00());
-        Point contourCenter = new Point(x, y);
+        Point contourCenter = getCenterPoint(sudokuContour);
 
         if (pRes.VIEW_PROGRESS) {
             Imgproc.circle(raw, contourCenter, 10, new Scalar(0, 0, 255), -1);
@@ -240,6 +236,18 @@ class SudokuContourFinder {
         }
 
         return sudokuContour;
+    }
+
+    private double getDistance(Point a, Point b) {
+        return Core.norm(new MatOfPoint(a), new MatOfPoint(b));
+    }
+
+    private Point getCenterPoint(MatOfPoint sudokuContour) {
+        // calculate center of sudoku contour using moment
+        Moments moments = Imgproc.moments(sudokuContour, false);
+        int x = (int) (moments.get_m10() / moments.get_m00());
+        int y = (int) (moments.get_m01() / moments.get_m00());
+        return new Point(x, y);
     }
 }
 
@@ -279,7 +287,7 @@ class ConvexHullToContourConverter {
 }
 
 class SudokuArrayConverter {
-    private ANN_MLP model;
+    private StatModel model;
 
     SudokuArrayConverter() {
         model = ANN_MLP.load("model.xml");
@@ -339,23 +347,25 @@ class SudokuArrayConverter {
                         rowRange(i * offset, i * offset + offset).
                         colRange(j * offset, j * offset + offset);
         }
-
         return elements;
     }
 }
 
-class SudokuAnswerRenderer {
-    Mat render() {
-        return new Mat();
-    }
-}
-
 public class ArSudokuSolver {
+    private SudokuContourFinder sudokuContourFinder;
     private SudokuArrayConverter sudokuArrayConverter;
-    private static boolean VIEW_PROGRESS = false;
+    private ConvexHullToContourConverter convexHullToContourConverter;
+    private SudokuCornerExtractor sudokuCornerExtractor;
+    private SudokuAlgorithmSolver sudokuAlgorithmSolver;
+    private ExecutorService executorService;
 
     ArSudokuSolver() {
+        sudokuContourFinder = new SudokuContourFinder();
         sudokuArrayConverter = new SudokuArrayConverter();
+        convexHullToContourConverter = new ConvexHullToContourConverter();
+        sudokuCornerExtractor = new SudokuCornerExtractor();
+        sudokuAlgorithmSolver = new SudokuAlgorithmSolver();
+        executorService = Executors.newSingleThreadExecutor();
     }
 
     static {
@@ -363,7 +373,7 @@ public class ArSudokuSolver {
     }
 
     public static void main(String[] args) {
-        final int skipFrameCnt = 10;
+        final int skipFrameCnt = 4;
         int cnt = 0;
         VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
         ArSudokuSolver solver = new ArSudokuSolver();
@@ -378,6 +388,7 @@ public class ArSudokuSolver {
             try {
                 HighGui.imshow("cam", solver.render(frame));
             } catch (Exception e) {
+                e.printStackTrace();
                 HighGui.imshow("cam", frame);
             }
             HighGui.waitKey(1);
@@ -394,40 +405,25 @@ public class ArSudokuSolver {
 
         drawLine(raw, proc);
 
-        MatOfPoint sudokuContour = new SudokuContourFinder().find(raw, proc);
+        MatOfPoint sudokuContour = sudokuContourFinder.find(raw, proc);
 
         // 널주의
-//        MatOfPoint hullPoints = new ConvexHullToContourConverter().convert(raw, sudokuContour);
+//        MatOfPoint hullPoints = convexHullToContourConverter.convert(raw, sudokuContour);
 
-        // 널포인터 주의
-        Point[] corners = new SudokuCornerExtractor().extract(sudokuContour, raw);
+        // 널주의
+        Point[] corners = sudokuCornerExtractor.extract(sudokuContour, raw);
 
-//        if (corners == null)
-//            return raw;
-
-        Mat[] perspectiveTransformers = new SudokuArrayConverter().getPerspectiveTransformers(corners, proc);
-
+        Mat[] perspectiveTransformers = sudokuArrayConverter.getPerspectiveTransformers(corners, proc);
 
         Mat perspectiveTransformer = perspectiveTransformers[0];
 
-
         Mat inverseTransformer = perspectiveTransformers[1];
 
-
-        // model 중첩 로딩
         int[][] unsolvedSudoku = sudokuArrayConverter.convert(perspectiveTransformer, proc);
 
-
         // calculate sudoku answer
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Callable task = () -> new SudokuAlgorithmSolver().getAnswer2d(unsolvedSudoku);
-        Future future = executor.submit(task);
-        future.get(100, TimeUnit.MILLISECONDS);
-        int[][] solvedSudoku = (int[][]) task.call();
-
-//        int[][] solvedSudoku = new SudokuAlgorithmSolver().getAnswer2d(unsolvedSudoku);
-
-
+        Callable<int[][]> callable = () -> sudokuAlgorithmSolver.getAnswer2d(unsolvedSudoku);
+        int[][] solvedSudoku = executorService.submit(callable).get(100, TimeUnit.MILLISECONDS);
 
         // get perspective transformation of raw sudoku area
         Mat perspective = new Mat();
@@ -443,7 +439,8 @@ public class ArSudokuSolver {
         for (int i = 0; i < 9; ++i) {
             for (int j = 0; j < 9; ++j) {
                 if (unsolvedSudoku[i][j] == 0)
-                    Imgproc.putText(perspective, String.valueOf(solvedSudoku[i][j]),
+                    Imgproc.putText(perspective,
+                            String.valueOf(solvedSudoku[i][j]),
                             new Point(j * colOffset + 16, i * rowOffset + 39),
                             Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(0, 255, 0), 3);
             }
