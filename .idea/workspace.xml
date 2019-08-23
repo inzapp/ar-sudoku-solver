@@ -4,14 +4,7 @@
     <list default="true" id="060a236c-8d3e-4b84-8d19-6f13e46a3428" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/ArSudokuSolver.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/ArSudokuSolver.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/ConvexHullToContourConverter.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/ConvexHullToContourConverter.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuAlgorithmSolver$Node.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuAlgorithmSolver$Node.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuAlgorithmSolver.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuAlgorithmSolver.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuAnswerRenderer.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuArrayConverter.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuArrayConverter.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuContourFinder.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuContourFinder.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuCornerExtractor$PointRank.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuCornerExtractor$PointRank.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuCornerExtractor.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/SudokuCornerExtractor.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/pRes.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/pRes.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ArSudokuSolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ArSudokuSolver.java" afterDir="false" />
     </list>

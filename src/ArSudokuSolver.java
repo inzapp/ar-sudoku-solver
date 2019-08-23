@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 class pRes {
-    static boolean VIEW_PROGRESS = true;
+    static boolean VIEW_PROGRESS = false;
 }
 
 class SudokuAlgorithmSolver {
@@ -388,7 +388,6 @@ public class ArSudokuSolver {
             try {
                 HighGui.imshow("cam", solver.render(frame));
             } catch (Exception e) {
-                e.printStackTrace();
                 HighGui.imshow("cam", frame);
             }
             HighGui.waitKey(1);
@@ -423,7 +422,7 @@ public class ArSudokuSolver {
 
         // calculate sudoku answer
         Callable<int[][]> callable = () -> sudokuAlgorithmSolver.getAnswer2d(unsolvedSudoku);
-        int[][] solvedSudoku = executorService.submit(callable).get(100, TimeUnit.MILLISECONDS);
+        int[][] solvedSudoku = executorService.submit(callable).get(200, TimeUnit.MILLISECONDS);
 
         // get perspective transformation of raw sudoku area
         Mat perspective = new Mat();
