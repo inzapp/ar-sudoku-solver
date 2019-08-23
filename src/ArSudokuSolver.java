@@ -287,22 +287,10 @@ class SudokuArrayConverter {
         // perspective transform with processing sudoku contour
         Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
 
-        // resize to (28 * 9) * (28 * 9) : 28 is column of train data
-        Imgproc.resize(proc, proc, new Size(28 * 9, 28 * 9));
-        if (pRes.VIEW_PROGRESS)
-            HighGui.imshow("transform", proc);
-
-        // split mat into 9 * 9
-        Mat[][] elements = new Mat[9][9];
-        int offset = 28;
-        for (int i = 0; i < 9; ++i) {
-            for (int j = 0; j < 9; ++j)
-                elements[i][j] = proc.rowRange(i * offset, i * offset + offset).colRange(j * offset, j * offset + offset);
-        }
-
-        Mat res = new Mat();
-        int[][] unsolvedSudoku = new int[9][9];
-        for (int i = 0; i < elements.length; ++i) {
+            Mat[][] elements = this.split(proc, 28);
+            Mat res = new Mat();
+            int[][] unsolvedSudoku = new int[9][9];
+            for (int i = 0; i < elements.length; ++i) {
             for (int j = 0; j < elements[i].length; ++j) {
                 Mat cur = elements[i][j];
                 cur.convertTo(cur, CvType.CV_32FC1, 1 / 255.0f);
@@ -333,11 +321,30 @@ class SudokuArrayConverter {
         Mat inverseTransformer = Imgproc.getPerspectiveTransform(after, before);
         return new Mat[]{perspectiveTransformer, inverseTransformer};
     }
+
+    private Mat[][] split(Mat proc, int splitSize) {
+        // resize to (28 * 9) * (28 * 9) : 28 is column of train data
+        Imgproc.resize(proc, proc, new Size(splitSize * 9, splitSize * 9));
+        if (pRes.VIEW_PROGRESS)
+            HighGui.imshow("transform", proc);
+
+        // split mat into 9 * 9
+        Mat[][] elements = new Mat[9][9];
+        int offset = splitSize;
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j)
+                elements[i][j] = proc.
+                        rowRange(i * offset, i * offset + offset).
+                        colRange(j * offset, j * offset + offset);
+        }
+
+        return elements;
+    }
 }
 
 class SudokuAnswerRenderer {
     Mat render() {
-
+        return new Mat();
     }
 }
 
@@ -412,7 +419,9 @@ public class ArSudokuSolver {
             for (int i = 0; i < 9; ++i) {
                 for (int j = 0; j < 9; ++j) {
                     if (unsolvedSudoku[i][j] == 0)
-                        Imgproc.putText(perspective, String.valueOf(solvedSudoku[i][j]), new Point(j * colOffset + 16, i * rowOffset + 39), Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(255, 255, 255), 3);
+                        Imgproc.putText(perspective, String.valueOf(solvedSudoku[i][j]),
+                                new Point(j * colOffset + 16, i * rowOffset + 39),
+                                Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(255, 255, 255), 3);
                 }
             }
             Imgproc.resize(perspective, perspective, raw.size());
