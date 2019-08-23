@@ -435,11 +435,9 @@ public class ArSudokuSolver {
 
             for (int row = 0; row < raw.rows(); ++row) {
                 for (int col = 0; col < raw.cols(); ++col) {
-                    if(originalPerspective.get(row, col)[0] == 0)
-                        continue;
-                    if(originalPerspective.get(row, col)[1] == 0)
-                        continue;
-                    if(originalPerspective.get(row, col)[2] == 0)
+                    if (originalPerspective.get(row, col)[0] == 0 &&
+                            originalPerspective.get(row, col)[1] == 0 &&
+                            originalPerspective.get(row, col)[2] == 0)
                         continue;
 
                     raw.put(row, col, originalPerspective.get(row, col));
