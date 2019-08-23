@@ -287,10 +287,10 @@ class SudokuArrayConverter {
         // perspective transform with processing sudoku contour
         Imgproc.warpPerspective(proc, proc, perspectiveTransformer, proc.size());
 
-            Mat[][] elements = this.split(proc, 28);
-            Mat res = new Mat();
-            int[][] unsolvedSudoku = new int[9][9];
-            for (int i = 0; i < elements.length; ++i) {
+        Mat[][] elements = this.split(proc, 28);
+        Mat res = new Mat();
+        int[][] unsolvedSudoku = new int[9][9];
+        for (int i = 0; i < elements.length; ++i) {
             for (int j = 0; j < elements[i].length; ++j) {
                 Mat cur = elements[i][j];
                 cur.convertTo(cur, CvType.CV_32FC1, 1 / 255.0f);
@@ -389,7 +389,8 @@ public class ArSudokuSolver {
 
         // 널포인터 주의
         Point[] corners = new SudokuCornerExtractor().extract(sudokuContour, raw);
-
+        if (corners == null)
+            return raw;
 
         Mat[] perspectiveTransformers = new SudokuArrayConverter().getPerspectiveTransformers(corners, proc);
 
@@ -402,7 +403,6 @@ public class ArSudokuSolver {
 
         // calculate sudoku answer
         int[][] solvedSudoku = new SudokuAlgorithmSolver().getAnswer2d(unsolvedSudoku);
-
 
         try {
             // get perspective transformation of raw sudoku area
@@ -431,28 +431,20 @@ public class ArSudokuSolver {
 
             // get inverse transform
             Mat originalPerspective = new Mat();
-            Mat inverseTransformer = Imgproc.getPerspectiveTransform(after, before);
             Imgproc.warpPerspective(perspective, originalPerspective, inverseTransformer, raw.size());
 
-            Imgproc.cvtColor(originalPerspective, originalPerspective, Imgproc.COLOR_BGR2BGRA);
-            for (int row = 0; row < originalPerspective.rows(); ++row) {
-                for (int col = 0; col < perspective.cols(); ++col) {
-                    if (perspective.get(row, col)[0] != 0)
+            for (int row = 0; row < raw.rows(); ++row) {
+                for (int col = 0; col < raw.cols(); ++col) {
+                    if(originalPerspective.get(row, col)[0] == 0)
                         continue;
-                    if (perspective.get(row, col)[1] != 0)
+                    if(originalPerspective.get(row, col)[1] == 0)
                         continue;
-                    if (perspective.get(row, col)[2] != 0)
+                    if(originalPerspective.get(row, col)[2] == 0)
                         continue;
 
-                    originalPerspective.put(row, col, 0, 0, 0, 0);
+                    raw.put(row, col, originalPerspective.get(row, col));
                 }
             }
-
-            // overlay answer number to raw perspective
-            Imgproc.cvtColor(raw, raw, Imgproc.COLOR_BGR2BGRA);
-            double alpha = 0.5;
-            Core.addWeighted(originalPerspective, alpha, raw, 1 - alpha, 0.0, raw);
-            Imgproc.cvtColor(raw, raw, Imgproc.COLOR_BGRA2BGR);
         } catch (Exception e) {
             // empty
         }
