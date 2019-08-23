@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class pRes {
     public static boolean VIEW_PROGRESS = false;
@@ -29,7 +31,7 @@ class SudokuAlgorithmSolver {
     private boolean[][] checkRow = new boolean[9][10];
     private boolean[][] checkBox = new boolean[9][10];
 
-    private int[][] solve(int[][] sudoku, int cnt, List<Node> nodes, int idx) {
+    private int[][] solve(int[][] sudoku, int cnt, List<Node> nodes, int idx) throws Exception{
         if (cnt <= idx) {
             if (pRes.VIEW_PROGRESS) {
                 for (int[] row : sudoku) {
@@ -70,7 +72,7 @@ class SudokuAlgorithmSolver {
         return null;
     }
 
-    int[][] getAnswer2d(int[][] sudoku) {
+    int[][] getAnswer2d(int[][] sudoku) throws Exception {
         int cnt = 0;
         List<Node> nodes = new ArrayList<>();
 
@@ -349,14 +351,19 @@ class SudokuAnswerRenderer {
 }
 
 public class ArSudokuSolver {
+    private SudokuArrayConverter sudokuArrayConverter;
     private static boolean VIEW_PROGRESS = false;
+
+    ArSudokuSolver() {
+        sudokuArrayConverter = new SudokuArrayConverter();
+    }
 
     static {
         System.load("C:\\inz\\lib\\opencv\\opencv_java410.dll");
     }
 
     public static void main(String[] args) {
-        final int skipFrameCnt = 4;
+        final int skipFrameCnt = 10;
         int cnt = 0;
         VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
         ArSudokuSolver solver = new ArSudokuSolver();
@@ -368,14 +375,19 @@ public class ArSudokuSolver {
             } else {
                 cnt = 0;
             }
-            HighGui.imshow("cam", solver.render(frame));
+            try {
+                HighGui.imshow("cam", solver.render(frame));
+            } catch (Exception e) {
+                HighGui.imshow("cam", frame);
+            }
             HighGui.waitKey(1);
         }
 
+        System.out.println("end");
         System.exit(0);
     }
 
-    private Mat render(Mat raw) {
+    private Mat render(Mat raw) throws Exception {
         Mat proc = raw.clone();
 
         preProcess(proc);
@@ -385,66 +397,77 @@ public class ArSudokuSolver {
         MatOfPoint sudokuContour = new SudokuContourFinder().find(raw, proc);
 
         // 널주의
-        MatOfPoint hullPoints = new ConvexHullToContourConverter().convert(raw, sudokuContour);
+//        MatOfPoint hullPoints = new ConvexHullToContourConverter().convert(raw, sudokuContour);
 
         // 널포인터 주의
         Point[] corners = new SudokuCornerExtractor().extract(sudokuContour, raw);
-        if (corners == null)
-            return raw;
+
+//        if (corners == null)
+//            return raw;
 
         Mat[] perspectiveTransformers = new SudokuArrayConverter().getPerspectiveTransformers(corners, proc);
 
+
         Mat perspectiveTransformer = perspectiveTransformers[0];
+
 
         Mat inverseTransformer = perspectiveTransformers[1];
 
+
         // model 중첩 로딩
-        int[][] unsolvedSudoku = new SudokuArrayConverter().convert(perspectiveTransformer, proc);
+        int[][] unsolvedSudoku = sudokuArrayConverter.convert(perspectiveTransformer, proc);
+
 
         // calculate sudoku answer
-        int[][] solvedSudoku = new SudokuAlgorithmSolver().getAnswer2d(unsolvedSudoku);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable task = () -> new SudokuAlgorithmSolver().getAnswer2d(unsolvedSudoku);
+        Future future = executor.submit(task);
+        future.get(100, TimeUnit.MILLISECONDS);
+        int[][] solvedSudoku = (int[][]) task.call();
 
-        try {
-            // get perspective transformation of raw sudoku area
-            Mat perspective = new Mat();
-            Imgproc.warpPerspective(raw, perspective, perspectiveTransformer, raw.size());
+//        int[][] solvedSudoku = new SudokuAlgorithmSolver().getAnswer2d(unsolvedSudoku);
 
-            // resize 1 : 1 rectangle shape
-            int smaller = Math.min(raw.rows(), raw.cols());
-            Imgproc.resize(perspective, perspective, new Size(smaller, smaller));
 
-            // render perspective to answer text
-            int rowOffset = perspective.rows() / 9;
-            int colOffset = perspective.cols() / 9;
-            for (int i = 0; i < 9; ++i) {
-                for (int j = 0; j < 9; ++j) {
-                    if (unsolvedSudoku[i][j] == 0)
-                        Imgproc.putText(perspective, String.valueOf(solvedSudoku[i][j]),
-                                new Point(j * colOffset + 16, i * rowOffset + 39),
-                                Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(255, 255, 255), 3);
-                }
+
+        // get perspective transformation of raw sudoku area
+        Mat perspective = new Mat();
+        Imgproc.warpPerspective(raw, perspective, perspectiveTransformer, raw.size());
+
+        // resize 1 : 1 rectangle shape
+        int smaller = Math.min(raw.rows(), raw.cols());
+        Imgproc.resize(perspective, perspective, new Size(smaller, smaller));
+
+        // render perspective to answer text
+        int rowOffset = perspective.rows() / 9;
+        int colOffset = perspective.cols() / 9;
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j) {
+                if (unsolvedSudoku[i][j] == 0)
+                    Imgproc.putText(perspective, String.valueOf(solvedSudoku[i][j]),
+                            new Point(j * colOffset + 16, i * rowOffset + 39),
+                            Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(0, 255, 0), 3);
             }
-            Imgproc.resize(perspective, perspective, raw.size());
+        }
 
-            if (pRes.VIEW_PROGRESS)
-                HighGui.imshow("perspective", perspective);
+        Imgproc.resize(perspective, perspective, raw.size());
 
-            // get inverse transform
-            Mat originalPerspective = new Mat();
-            Imgproc.warpPerspective(perspective, originalPerspective, inverseTransformer, raw.size());
+        if (pRes.VIEW_PROGRESS)
+            HighGui.imshow("perspective", perspective);
 
-            for (int row = 0; row < raw.rows(); ++row) {
-                for (int col = 0; col < raw.cols(); ++col) {
-                    if (originalPerspective.get(row, col)[0] == 0 &&
-                            originalPerspective.get(row, col)[1] == 0 &&
-                            originalPerspective.get(row, col)[2] == 0)
-                        continue;
+        // get inverse transform
+        Mat originalPerspective = new Mat();
+        Imgproc.warpPerspective(perspective, originalPerspective, inverseTransformer, raw.size());
 
-                    raw.put(row, col, originalPerspective.get(row, col));
-                }
+        // overlay
+        for (int row = 0; row < raw.rows(); ++row) {
+            for (int col = 0; col < raw.cols(); ++col) {
+                if (originalPerspective.get(row, col)[0] == 0 &&
+                        originalPerspective.get(row, col)[1] == 0 &&
+                        originalPerspective.get(row, col)[2] == 0)
+                    continue;
+
+                raw.put(row, col, originalPerspective.get(row, col));
             }
-        } catch (Exception e) {
-            // empty
         }
 
         return raw;
