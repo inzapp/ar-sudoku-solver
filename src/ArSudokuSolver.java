@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 class pRes {
-    static boolean VIEW_PROGRESS = false;
+    static boolean VIEW_PROGRESS = true;
 }
 
 class SudokuAlgorithmSolver {
@@ -275,7 +275,6 @@ class ConvexHullToContourConverter {
             List<MatOfPoint> hullList = new ArrayList<>();
             hullList.add(new MatOfPoint(hullPoints));
 
-//            if(!pRes.VIEW_PROGRESS)
             // draw hull
             Imgproc.drawContours(raw, hullList, 0, new Scalar(0, 255, 0), 2);
 
@@ -334,10 +333,15 @@ class SudokuArrayConverter {
 
     private Mat[][] split(Mat proc, int splitSize) {
         // resize to (28 * 9) * (28 * 9) : 28 is column of train data
-        Imgproc.resize(proc, proc, new Size(splitSize * 9, splitSize * 9));
-        if (pRes.VIEW_PROGRESS)
-            HighGui.imshow("transform", proc);
+        if (pRes.VIEW_PROGRESS) {
+            Mat transform = new Mat();
+            Imgproc.resize(proc, transform, new Size(splitSize * 15, splitSize * 15));
+            HighGui.namedWindow("transform");
+            HighGui.imshow("transform", transform);
+            HighGui.moveWindow("transform", 0, 530);
+        }
 
+        Imgproc.resize(proc, proc, new Size(splitSize * 9, splitSize * 9));
         // split mat into 9 * 9
         Mat[][] elements = new Mat[9][9];
         int offset = splitSize;
@@ -369,13 +373,13 @@ public class ArSudokuSolver {
     }
 
     static {
-        System.load("C:\\inz\\lib\\opencv\\opencv_java410.dll");
+        System.load("C:\\inz\\lib\\opencv_java411.dll");
     }
 
     public static void main(String[] args) {
-        final int skipFrameCnt = 4;
+        final int skipFrameCnt = 3;
         int cnt = 0;
-        VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
+        VideoCapture vc = new VideoCapture("C:\\inz\\123.mp4");
         ArSudokuSolver solver = new ArSudokuSolver();
         Mat frame = new Mat();
         while (vc.read(frame)) {
@@ -386,6 +390,8 @@ public class ArSudokuSolver {
                 cnt = 0;
             }
             try {
+                HighGui.namedWindow("cam");
+                HighGui.moveWindow("cam", 0, 0);
                 HighGui.imshow("cam", solver.render(frame));
             } catch (Exception e) {
                 HighGui.imshow("cam", frame);
@@ -406,10 +412,8 @@ public class ArSudokuSolver {
 
         MatOfPoint sudokuContour = sudokuContourFinder.find(raw, proc);
 
-        // 널주의
 //        MatOfPoint hullPoints = convexHullToContourConverter.convert(raw, sudokuContour);
 
-        // 널주의
         Point[] corners = sudokuCornerExtractor.extract(sudokuContour, raw);
 
         Mat[] perspectiveTransformers = sudokuArrayConverter.getPerspectiveTransformers(corners, proc);
@@ -422,7 +426,7 @@ public class ArSudokuSolver {
 
         // calculate sudoku answer
         Callable<int[][]> callable = () -> sudokuAlgorithmSolver.getAnswer2d(unsolvedSudoku);
-        int[][] solvedSudoku = executorService.submit(callable).get(200, TimeUnit.MILLISECONDS);
+        int[][] solvedSudoku = executorService.submit(callable).get(100, TimeUnit.MILLISECONDS);
 
         // get perspective transformation of raw sudoku area
         Mat perspective = new Mat();
@@ -441,18 +445,21 @@ public class ArSudokuSolver {
                     Imgproc.putText(perspective,
                             String.valueOf(solvedSudoku[i][j]),
                             new Point(j * colOffset + 16, i * rowOffset + 39),
-                            Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(0, 255, 0), 3);
+                            Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(255, 0, 0), 3);
             }
         }
 
         Imgproc.resize(perspective, perspective, raw.size());
 
-        if (pRes.VIEW_PROGRESS)
-            HighGui.imshow("perspective", perspective);
-
         // get inverse transform
         Mat originalPerspective = new Mat();
         Imgproc.warpPerspective(perspective, originalPerspective, inverseTransformer, raw.size());
+
+        if (pRes.VIEW_PROGRESS) {
+            HighGui.namedWindow("perspective");
+            HighGui.imshow("perspective", originalPerspective);
+            HighGui.moveWindow("perspective", 655, 0);
+        }
 
         // overlay
         for (int row = 0; row < raw.rows(); ++row) {
