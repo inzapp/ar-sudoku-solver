@@ -17,93 +17,55 @@ import java.util.concurrent.TimeUnit;
 
 class pRes {
     static boolean VIEW_PROGRESS = true;
+    static int VIEW_MODE = View.VIEW_MODE_PROGRESS;
 }
 
 class View {
-    static Mat pureResult = new Mat();
-    static Mat progress = new Mat();
-    static Mat sudokuArea = new Mat();
-    static Mat transform = new Mat();
+    static final int VIEW_MODE_PROGRESS = 1;
+    static final int VIEW_MODE_ELEMENTS = 2;
+
+    static Mat pureResult;
+    static Mat progress;
+    static Mat sudokuArea;
+    static Mat transform;
     static Mat[][] elements = new Mat[9][9];
 
     static void init() {
-        Mat emptyDot = new Mat(1, 1, CvType.CV_8UC1);
-        emptyDot.put(0, 0, 0, 0, 0);
-        pureResult = emptyDot.clone();
-        progress = emptyDot.clone();
-        sudokuArea = emptyDot.clone();
-        transform = emptyDot.clone();
-
+        pureResult = Mat.zeros(new Size(854, 480), CvType.CV_8UC3);
+        progress = Mat.zeros(new Size(854, 480), CvType.CV_8UC3);
+        sudokuArea = Mat.zeros(new Size(854, 480), CvType.CV_8UC1);
+        transform = Mat.zeros(new Size(28 * 15, 28 * 15), CvType.CV_8UC1);
         for (int i = 0; i < elements.length; ++i) {
-            for (int j = 0; j < elements[i].length; ++j) {
-                elements[i][j] = emptyDot.clone();
-            }
+            for (int j = 0; j < elements[i].length; ++j)
+                elements[i][j] = Mat.zeros(new Size(28 * 15 / 9, 28 * 15 / 9), CvType.CV_8UC1);
         }
     }
 
     static void show(int fps) {
-        showPureResult("cam");
+        imshow("cam", pureResult, 0, 0);
         if (pRes.VIEW_PROGRESS) {
-            showProgress("progress");
-            showSudokuArea("sudoku_area");
-            showTransform("transform");
-            showElements("e");
+            if(pRes.VIEW_MODE == VIEW_MODE_PROGRESS) {
+                imshow("progress", progress, 870, 0);
+                imshow("sudoku_area", sudokuArea, 0, 525);
+                imshow("transform", transform, 870, 525);
+            }
+            else if(pRes.VIEW_MODE == VIEW_MODE_ELEMENTS) {
+                imshow("transform", transform, 435, 525);
+                int offset = 110;
+                for (int i = 0; i < elements.length; ++i) {
+                    for (int j = 0; j < elements[i].length; ++j) {
+                        imshow("e" + i + j, elements[i][j], 880 - offset + (j * offset + offset),  (i * offset + offset) - offset);
+                    }
+                }
+            }
         }
         HighGui.waitKey(fps);
     }
 
-    private static void showPureResult(String windowName) {
-        try {
-            HighGui.namedWindow(windowName);
-            HighGui.moveWindow(windowName, 0, 0);
-            HighGui.imshow(windowName, pureResult);
-        } catch (Exception e) {
-            // empty
-        }
-    }
-
-    private static void showProgress(String windowName) {
-        try {
-            HighGui.namedWindow(windowName);
-            HighGui.moveWindow(windowName, 865, 0);
-            HighGui.imshow(windowName, progress);
-        } catch (Exception e) {
-            // empty
-        }
-    }
-
-    private static void showSudokuArea(String windowName) {
-        try {
-            HighGui.namedWindow(windowName);
-            HighGui.moveWindow(windowName, 0, 730);
-            HighGui.imshow(windowName, sudokuArea);
-        } catch (Exception e) {
-            // empty
-        }
-    }
-
-    private static void showTransform(String windowName) {
-        try {
-            HighGui.namedWindow(windowName);
-            HighGui.moveWindow(windowName, 865, 730);
-            HighGui.imshow(windowName, transform);
-        } catch (Exception e) {
-            // empty
-        }
-    }
-
-    private static void showElements(String windowName) {
-        try {
-            for (int i = 0; i < elements.length; ++i) {
-                for (int j = 0; j < elements[i].length; ++j) {
-                    HighGui.namedWindow(windowName + i + j);
-                    HighGui.moveWindow(windowName + i + j, 500 + i * 50, 500 * j * 50);
-                    HighGui.imshow(windowName + i + j, elements[i][j]);
-                }
-            }
-        } catch (Exception e) {
-            // empty
-        }
+    private static void imshow(String windowName, Mat img, int x, int y) {
+        HighGui.namedWindow(windowName, HighGui.WINDOW_AUTOSIZE);
+        HighGui.moveWindow(windowName, x, y);
+        HighGui.imshow(windowName, img);
     }
 }
 
@@ -202,7 +164,7 @@ class SudokuCornerExtractor {
         Point point;
     }
 
-    Point[] extract(MatOfPoint sudokuContour, Mat raw) {
+    Point[] extract(MatOfPoint sudokuContour, Mat progress) {
         // find 4 corner of sudoku contour to perspective transform
         // copy points to point rank and sort
         try {
@@ -262,10 +224,10 @@ class SudokuCornerExtractor {
             bottomRight = pointRanks[0].point;
 
             if (pRes.VIEW_PROGRESS) {
-                Imgproc.circle(raw, topLeft, 10, new Scalar(0, 0, 255), 2);
-                Imgproc.circle(raw, topRight, 10, new Scalar(0, 0, 255), 2);
-                Imgproc.circle(raw, bottomLeft, 10, new Scalar(0, 0, 255), 2);
-                Imgproc.circle(raw, bottomRight, 10, new Scalar(0, 0, 255), 2);
+                Imgproc.circle(progress, topLeft, 10, new Scalar(0, 0, 255), 2);
+                Imgproc.circle(progress, topRight, 10, new Scalar(0, 0, 255), 2);
+                Imgproc.circle(progress, bottomLeft, 10, new Scalar(0, 0, 255), 2);
+                Imgproc.circle(progress, bottomRight, 10, new Scalar(0, 0, 255), 2);
             }
 
             return new Point[]{topLeft, topRight, bottomLeft, bottomRight};
@@ -276,18 +238,18 @@ class SudokuCornerExtractor {
 }
 
 class SudokuContourFinder {
-    MatOfPoint find(Mat raw, Mat proc) {
+    MatOfPoint find(Mat progress, Mat proc) {
         // find contours
         List<MatOfPoint> contours = new ArrayList<>();
         Imgproc.findContours(proc, contours, new Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
 
         // calculate center of raw img
-        Point frameCenter = new Point(raw.width() / 2, raw.height() / 2);
+        Point frameCenter = new Point(progress.width() / 2, progress.height() / 2);
 
         // extract sudoku contour
         double maxArea = 0;
         MatOfPoint sudokuContour = new MatOfPoint();
-        int rawResolution = raw.rows() * raw.cols();
+        int rawResolution = progress.rows() * progress.cols();
         for (MatOfPoint contour : contours) {
             Rect rect = Imgproc.boundingRect(contour);
 
@@ -319,8 +281,8 @@ class SudokuContourFinder {
         Point contourCenter = getCenterPoint(sudokuContour);
 
         if (pRes.VIEW_PROGRESS) {
-            Imgproc.circle(raw, contourCenter, 10, new Scalar(0, 0, 255), -1);
-            Imgproc.circle(raw, frameCenter, 10, new Scalar(255, 0, 0), -1);
+            Imgproc.circle(progress, contourCenter, 10, new Scalar(0, 0, 255), -1);
+            Imgproc.circle(progress, frameCenter, 10, new Scalar(255, 0, 0), -1);
         }
 
         return sudokuContour;
@@ -340,7 +302,7 @@ class SudokuContourFinder {
 }
 
 class ConvexHullToContourConverter {
-    MatOfPoint convert(Mat raw, MatOfPoint sudokuContour) {
+    MatOfPoint convert(Mat progress, MatOfPoint sudokuContour) {
         // 지우고
         if (!pRes.VIEW_PROGRESS)
             return null;
@@ -364,7 +326,7 @@ class ConvexHullToContourConverter {
             hullList.add(new MatOfPoint(hullPoints));
 
             // draw hull
-            Imgproc.drawContours(raw, hullList, 0, new Scalar(0, 255, 0), 2);
+            Imgproc.drawContours(progress, hullList, 0, new Scalar(0, 255, 0), 2);
 
             return new MatOfPoint(hullPoints);
         } catch (Exception e) {
@@ -438,18 +400,14 @@ class SudokuArrayConverter {
                         colRange(j * offset, j * offset + offset);
         }
 
-//        if (pRes.VIEW_PROGRESS) {
-//            for (int i = 0; i < elements.length; ++i) {
-//                for (int j = 0; j < elements[i].length; ++j) {
-//                    Mat elementView = new Mat();
-//                    Imgproc.resize(elements[i][j], elementView, new Size(splitSize * 15 / 9, splitSize * 15 / 9));
-//                    String windowName = "" + i + j;
-//                    HighGui.namedWindow(windowName);
-//                    HighGui.moveWindow(windowName, (i * 50 + 50), (j * 50 + 50));
-//                    HighGui.imshow(windowName, elementView);
-//                }
-//            }
-//        }
+        if (pRes.VIEW_PROGRESS) {
+            for (int i = 0; i < elements.length; ++i) {
+                for (int j = 0; j < elements[i].length; ++j) {
+                    Mat elementView = new Mat();
+                    Imgproc.resize(elements[i][j], View.elements[i][j], new Size(splitSize * 15 / 9, splitSize * 15 / 9));
+                }
+            }
+        }
         return elements;
     }
 }
@@ -489,15 +447,8 @@ public class ArSudokuSolver {
             } else {
                 cnt = 0;
             }
+
             solver.render(frame);
-            try {
-//                HighGui.namedWindow("cam");
-//                HighGui.moveWindow("cam", 0, 0);
-//                HighGui.imshow("cam", solver.render(frame));
-            } catch (Exception e) {
-//                HighGui.imshow("cam", frame);
-            }
-//            HighGui.waitKey(1);
             View.show(1);
         }
 
@@ -506,19 +457,19 @@ public class ArSudokuSolver {
     }
 
     private Mat render(Mat raw) {
+        Mat pureResult = raw.clone();
+        Mat progress = raw.clone();
+        Mat proc = raw.clone();
         try {
-            Mat proc = raw.clone();
-            Mat rawDrawing = raw.clone();
-
             preProcess(proc);
 
-            drawLine(rawDrawing, proc);
+            drawLine(progress, proc);
 
-            MatOfPoint sudokuContour = sudokuContourFinder.find(rawDrawing, proc);
+            MatOfPoint sudokuContour = sudokuContourFinder.find(progress, proc);
 
-//        MatOfPoint hullPoints = convexHullToContourConverter.convert(rawProgress, sudokuContour);
+            MatOfPoint hullPoints = convexHullToContourConverter.convert(progress, sudokuContour);
 
-            Point[] corners = sudokuCornerExtractor.extract(sudokuContour, rawDrawing);
+            Point[] corners = sudokuCornerExtractor.extract(sudokuContour, progress);
 
             Mat[] perspectiveTransformers = sudokuArrayConverter.getPerspectiveTransformers(corners, proc);
 
@@ -530,8 +481,7 @@ public class ArSudokuSolver {
 
             // calculate sudoku answer
             Callable<int[][]> callable = () -> sudokuAlgorithmSolver.getAnswer2d(unsolvedSudoku);
-            int[][] solvedSudoku = new int[0][];
-            solvedSudoku = executorService.submit(callable).get(100, TimeUnit.MILLISECONDS);// get perspective transformation of raw sudoku area
+            int[][] solvedSudoku = executorService.submit(callable).get(100, TimeUnit.MILLISECONDS);// get perspective transformation of raw sudoku area
             Mat perspective = new Mat();
             Imgproc.warpPerspective(raw, perspective, perspectiveTransformer, raw.size());
 
@@ -570,13 +520,14 @@ public class ArSudokuSolver {
                             originalPerspective.get(row, col)[2] == 0)
                         continue;
 
-                    raw.put(row, col, originalPerspective.get(row, col));
+                    pureResult.put(row, col, originalPerspective.get(row, col));
                 }
             }
         } catch (Exception e) {
         }
 
-        View.pureResult = raw;
+        View.pureResult = pureResult;
+        View.progress = progress;
         return raw;
     }
 
@@ -588,7 +539,7 @@ public class ArSudokuSolver {
         Core.bitwise_not(proc, proc);
     }
 
-    private void drawLine(Mat raw, Mat proc) {
+    private void drawLine(Mat progress, Mat proc) {
         // detect line
         if (pRes.VIEW_PROGRESS) {
             Mat canny = proc.clone();
@@ -604,7 +555,7 @@ public class ArSudokuSolver {
                 double y = b * rho;
                 Point pt1 = new Point(Math.round(x + 1000 * (-b)), Math.round(y + 1000 * (a)));
                 Point pt2 = new Point(Math.round(x - 1000 * (-b)), Math.round(y - 1000 * (a)));
-                Imgproc.line(raw, pt1, pt2, new Scalar(255, 0, 0), 2, Imgproc.LINE_AA, 0);
+                Imgproc.line(progress, pt1, pt2, new Scalar(255, 0, 0), 2, Imgproc.LINE_AA, 0);
             }
         }
     }
