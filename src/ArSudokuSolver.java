@@ -10,13 +10,83 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 class pRes {
     static boolean VIEW_PROGRESS = true;
+}
+
+class View {
+    static Mat pureResult;
+    static Mat progress;
+    static Mat sudokuArea;
+    static Mat transform;
+    static Mat[][] elements;
+
+    static void showView(int fps) {
+        showPureResult("cam");
+        if(pRes.VIEW_PROGRESS) {
+            showProgress("progress");
+            showSudokuArea("sudoku_area");
+            showTransform("transform");
+            showElements("e");
+        }
+        HighGui.waitKey(fps);
+    }
+
+    private static void showPureResult(String windowName) {
+        try {
+            HighGui.namedWindow(windowName);
+            HighGui.moveWindow(windowName, 0, 0);
+            HighGui.imshow(windowName, pureResult);
+        }catch(Exception e){
+            // empty
+        }
+    }
+
+    private static void showProgress(String windowName) {
+        try {
+            HighGui.namedWindow(windowName);
+            HighGui.moveWindow(windowName, 0, 0);
+            HighGui.imshow(windowName, progress);
+        }catch(Exception e){
+            // empty
+        }
+    }
+
+    private static void showSudokuArea(String windowName) {
+        try {
+            HighGui.namedWindow(windowName);
+            HighGui.moveWindow(windowName, 0, 0);
+            HighGui.imshow(windowName, sudokuArea);
+        }catch(Exception e){
+            // empty
+        }
+    }
+
+    private static void showTransform(String windowName) {
+        try {
+            HighGui.namedWindow(windowName);
+            HighGui.moveWindow(windowName, 0, 0);
+            HighGui.imshow(windowName, transform);
+        }catch(Exception e){
+            // empty
+        }
+    }
+
+    private static void showElements(String windowName) {
+        try {
+            for(int i=0; i<elements.length; ++i) {
+                for(int j=0; j<elements[i].length; ++j) {
+                    HighGui.namedWindow(windowName + i + j);
+                    HighGui.moveWindow(windowName + i + j, 0, 0);
+                    HighGui.imshow(windowName + i + j, elements[i][j]);
+                }
+            }
+        }catch(Exception e){
+            // empty
+        }
+    }
 }
 
 class SudokuAlgorithmSolver {
@@ -338,7 +408,7 @@ class SudokuArrayConverter {
             Imgproc.resize(proc, transform, new Size(splitSize * 15, splitSize * 15));
             HighGui.namedWindow("transform");
             HighGui.imshow("transform", transform);
-            HighGui.moveWindow("transform", 0, 530);
+            HighGui.moveWindow("transform", 0, 520);
         }
 
         Imgproc.resize(proc, proc, new Size(splitSize * 9, splitSize * 9));
@@ -351,6 +421,19 @@ class SudokuArrayConverter {
                         rowRange(i * offset, i * offset + offset).
                         colRange(j * offset, j * offset + offset);
         }
+
+//        if (pRes.VIEW_PROGRESS) {
+//            for (int i = 0; i < elements.length; ++i) {
+//                for (int j = 0; j < elements[i].length; ++j) {
+//                    Mat elementView = new Mat();
+//                    Imgproc.resize(elements[i][j], elementView, new Size(splitSize * 15 / 9, splitSize * 15 / 9));
+//                    String windowName = "" + i + j;
+//                    HighGui.namedWindow(windowName);
+//                    HighGui.moveWindow(windowName, (i * 50 + 50), (j * 50 + 50));
+//                    HighGui.imshow(windowName, elementView);
+//                }
+//            }
+//        }
         return elements;
     }
 }
@@ -379,7 +462,7 @@ public class ArSudokuSolver {
     public static void main(String[] args) {
         final int skipFrameCnt = 3;
         int cnt = 0;
-        VideoCapture vc = new VideoCapture("C:\\inz\\123.mp4");
+        VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
         ArSudokuSolver solver = new ArSudokuSolver();
         Mat frame = new Mat();
         while (vc.read(frame)) {
@@ -390,31 +473,32 @@ public class ArSudokuSolver {
                 cnt = 0;
             }
             try {
-                HighGui.namedWindow("cam");
-                HighGui.moveWindow("cam", 0, 0);
-                HighGui.imshow("cam", solver.render(frame));
+//                HighGui.namedWindow("cam");
+//                HighGui.moveWindow("cam", 0, 0);
+//                HighGui.imshow("cam", solver.render(frame));
             } catch (Exception e) {
-                HighGui.imshow("cam", frame);
+//                HighGui.imshow("cam", frame);
             }
-            HighGui.waitKey(1);
+//            HighGui.waitKey(1);
         }
 
         System.out.println("end");
         System.exit(0);
     }
 
-    private Mat render(Mat raw) throws Exception {
+    private Mat render(Mat raw) {
         Mat proc = raw.clone();
+        Mat rawDrawing = raw.clone();
 
         preProcess(proc);
 
-        drawLine(raw, proc);
+        drawLine(rawDrawing, proc);
 
-        MatOfPoint sudokuContour = sudokuContourFinder.find(raw, proc);
+        MatOfPoint sudokuContour = sudokuContourFinder.find(rawDrawing, proc);
 
-//        MatOfPoint hullPoints = convexHullToContourConverter.convert(raw, sudokuContour);
+//        MatOfPoint hullPoints = convexHullToContourConverter.convert(rawProgress, sudokuContour);
 
-        Point[] corners = sudokuCornerExtractor.extract(sudokuContour, raw);
+        Point[] corners = sudokuCornerExtractor.extract(sudokuContour, rawDrawing);
 
         Mat[] perspectiveTransformers = sudokuArrayConverter.getPerspectiveTransformers(corners, proc);
 
@@ -426,53 +510,58 @@ public class ArSudokuSolver {
 
         // calculate sudoku answer
         Callable<int[][]> callable = () -> sudokuAlgorithmSolver.getAnswer2d(unsolvedSudoku);
-        int[][] solvedSudoku = executorService.submit(callable).get(100, TimeUnit.MILLISECONDS);
+        int[][] solvedSudoku = new int[0][];
+        try {
+            solvedSudoku = executorService.submit(callable).get(100, TimeUnit.MILLISECONDS);// get perspective transformation of raw sudoku area
+            Mat perspective = new Mat();
+            Imgproc.warpPerspective(raw, perspective, perspectiveTransformer, raw.size());
 
-        // get perspective transformation of raw sudoku area
-        Mat perspective = new Mat();
-        Imgproc.warpPerspective(raw, perspective, perspectiveTransformer, raw.size());
+            // resize 1 : 1 rectangle shape
+            int smaller = Math.min(raw.rows(), raw.cols());
+            Imgproc.resize(perspective, perspective, new Size(smaller, smaller));
 
-        // resize 1 : 1 rectangle shape
-        int smaller = Math.min(raw.rows(), raw.cols());
-        Imgproc.resize(perspective, perspective, new Size(smaller, smaller));
-
-        // render perspective to answer text
-        int rowOffset = perspective.rows() / 9;
-        int colOffset = perspective.cols() / 9;
-        for (int i = 0; i < 9; ++i) {
-            for (int j = 0; j < 9; ++j) {
-                if (unsolvedSudoku[i][j] == 0)
-                    Imgproc.putText(perspective,
-                            String.valueOf(solvedSudoku[i][j]),
-                            new Point(j * colOffset + 16, i * rowOffset + 39),
-                            Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(255, 0, 0), 3);
+            // render perspective to answer text
+            int rowOffset = perspective.rows() / 9;
+            int colOffset = perspective.cols() / 9;
+            for (int i = 0; i < 9; ++i) {
+                for (int j = 0; j < 9; ++j) {
+                    if (unsolvedSudoku[i][j] == 0)
+                        Imgproc.putText(perspective,
+                                String.valueOf(solvedSudoku[i][j]),
+                                new Point(j * colOffset + 16, i * rowOffset + 39),
+                                Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(255, 0, 0), 3);
+                }
             }
-        }
 
-        Imgproc.resize(perspective, perspective, raw.size());
+            Imgproc.resize(perspective, perspective, raw.size());
 
-        // get inverse transform
-        Mat originalPerspective = new Mat();
-        Imgproc.warpPerspective(perspective, originalPerspective, inverseTransformer, raw.size());
+            // get inverse transform
+            Mat originalPerspective = new Mat();
+            Imgproc.warpPerspective(perspective, originalPerspective, inverseTransformer, raw.size());
 
-        if (pRes.VIEW_PROGRESS) {
-            HighGui.namedWindow("perspective");
-            HighGui.imshow("perspective", originalPerspective);
-            HighGui.moveWindow("perspective", 655, 0);
-        }
-
-        // overlay
-        for (int row = 0; row < raw.rows(); ++row) {
-            for (int col = 0; col < raw.cols(); ++col) {
-                if (originalPerspective.get(row, col)[0] == 0 &&
-                        originalPerspective.get(row, col)[1] == 0 &&
-                        originalPerspective.get(row, col)[2] == 0)
-                    continue;
-
-                raw.put(row, col, originalPerspective.get(row, col));
+            if (pRes.VIEW_PROGRESS) {
+                HighGui.namedWindow("sudokuArea");
+                HighGui.moveWindow("sudokuArea", 865, 0);
+                HighGui.imshow("sudokuArea", originalPerspective);
             }
+
+            // overlay
+            for (int row = 0; row < raw.rows(); ++row) {
+                for (int col = 0; col < raw.cols(); ++col) {
+                    if (originalPerspective.get(row, col)[0] == 0 &&
+                            originalPerspective.get(row, col)[1] == 0 &&
+                            originalPerspective.get(row, col)[2] == 0)
+                        continue;
+
+                    raw.put(row, col, originalPerspective.get(row, col));
+                }
+            }
+        } catch (Exception e) {
         }
 
+        HighGui.namedWindow("cam");
+        HighGui.moveWindow("cam", 0, 0);
+        HighGui.imshow("cam", raw);
         return raw;
     }
 
