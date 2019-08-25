@@ -31,13 +31,15 @@ class View {
     static Mat[][] elements = new Mat[9][9];
 
     static void init() {
-        pureResult = Mat.zeros(new Size(854, 480), CvType.CV_8UC3);
-        progress = Mat.zeros(new Size(854, 480), CvType.CV_8UC3);
-        sudokuArea = Mat.zeros(new Size(854, 480), CvType.CV_8UC1);
-        transform = Mat.zeros(new Size(28 * 15, 28 * 15), CvType.CV_8UC1);
-        for (int i = 0; i < elements.length; ++i) {
-            for (int j = 0; j < elements[i].length; ++j)
-                elements[i][j] = Mat.zeros(new Size(28 * 15 / 9, 28 * 15 / 9), CvType.CV_8UC1);
+        if(pRes.VIEW_PROGRESS) {
+            pureResult = Mat.zeros(new Size(854, 480), CvType.CV_8UC3);
+            progress = Mat.zeros(new Size(854, 480), CvType.CV_8UC3);
+            sudokuArea = Mat.zeros(new Size(854, 480), CvType.CV_8UC1);
+            transform = Mat.zeros(new Size(28 * 15, 28 * 15), CvType.CV_8UC1);
+            for (int i = 0; i < elements.length; ++i) {
+                for (int j = 0; j < elements[i].length; ++j)
+                    elements[i][j] = Mat.zeros(new Size(28 * 15 / 9, 28 * 15 / 9), CvType.CV_8UC1);
+            }
         }
     }
 
@@ -303,8 +305,7 @@ class SudokuContourFinder {
 
 class ConvexHullToContourConverter {
     MatOfPoint convert(Mat progress, MatOfPoint sudokuContour) {
-        // 지우고
-        if (!pRes.VIEW_PROGRESS)
+        if(!pRes.VIEW_PROGRESS)
             return null;
 
         try {
@@ -434,9 +435,9 @@ public class ArSudokuSolver {
     }
 
     public static void main(String[] args) {
-        final int skipFrameCnt = 3;
+        final int skipFrameCnt = 7;
         int cnt = 0;
-        VideoCapture vc = new VideoCapture("C:\\inz\\sudoku.mp4");
+        VideoCapture vc = new VideoCapture("C:\\inz\\numgigi.mp4");
         ArSudokuSolver solver = new ArSudokuSolver();
         Mat frame = new Mat();
         View.init();
@@ -498,7 +499,7 @@ public class ArSudokuSolver {
                         Imgproc.putText(perspective,
                                 String.valueOf(solvedSudoku[i][j]),
                                 new Point(j * colOffset + 16, i * rowOffset + 39),
-                                Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(255, 0, 0), 3);
+                                Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(0, 0, 255), 3);
                 }
             }
 
