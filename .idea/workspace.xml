@@ -2,11 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="060a236c-8d3e-4b84-8d19-6f13e46a3428" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/config/Config.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/config/ViewMode.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/util/View.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/SudokuAlgorithmSolver.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ArSudokuSolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/ArSudokuSolver.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/ArSudokuSolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/ArSudokuSolver.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -25,7 +23,9 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectId" id="1PLoIeZXy5153GoF5ARPMTSNXZD" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
