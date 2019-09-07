@@ -1,10 +1,10 @@
 package com.inzapp.arSudokuSolver;
 
 import com.inzapp.arSudokuSolver.config.Config;
-import com.inzapp.arSudokuSolver.core.SudokuAlgorithmSolver;
+import com.inzapp.arSudokuSolver.core.AlgorithmSolver;
+import com.inzapp.arSudokuSolver.core.CornerExtractor;
 import com.inzapp.arSudokuSolver.util.View;
 import org.opencv.core.*;
-import org.opencv.highgui.HighGui;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 import org.opencv.ml.ANN_MLP;
@@ -21,91 +21,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 
-
-
-class SudokuCornerExtractor {
-    // used for calculating 4 corner of sudoku contour
-    private static class PointRank {
-        PointRank(Point point) {
-            this.point = point;
-        }
-
-        int rank = 0;
-        Point point;
-    }
-
-    Point[] extract(MatOfPoint sudokuContour, Mat progress) {
-        // find 4 corner of sudoku contour to perspective transform
-        // copy points to point rank and sort
-        try {
-            Point[] points = sudokuContour.toArray();
-            PointRank[] pointRanks = new PointRank[points.length];
-            for (int i = 0; i < pointRanks.length; i++)
-                pointRanks[i] = new PointRank(points[i]);
-
-            // top left
-            Point topLeft;
-            Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
-            for (int i = 0; i < pointRanks.length; i++)
-                pointRanks[i].rank += i;
-            Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.x));
-            for (int i = 0; i < pointRanks.length; i++)
-                pointRanks[i].rank += i;
-            Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
-            topLeft = pointRanks[0].point;
-
-            // top right
-            Point topRight;
-            for (int i = 0; i < pointRanks.length; i++)
-                pointRanks[i].rank = 0;
-            Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.x, a.point.x));
-            for (int i = 0; i < pointRanks.length; i++)
-                pointRanks[i].rank += i;
-            Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
-            for (int i = 0; i < pointRanks.length; i++)
-                pointRanks[i].rank += i;
-            Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
-            topRight = pointRanks[0].point;
-
-            // bottom left
-            Point bottomLeft;
-            for (int i = 0; i < pointRanks.length; i++)
-                pointRanks[i].rank = 0;
-            Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.x));
-            for (int i = 0; i < pointRanks.length; i++)
-                pointRanks[i].rank += i;
-            Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.y, a.point.y));
-            for (int i = 0; i < pointRanks.length; i++)
-                pointRanks[i].rank += i;
-            Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
-            bottomLeft = pointRanks[0].point;
-
-            // bottom right
-            Point bottomRight;
-            for (int i = 0; i < pointRanks.length; i++)
-                pointRanks[i].rank = 0;
-            Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.x, a.point.x));
-            for (int i = 0; i < pointRanks.length; i++)
-                pointRanks[i].rank += i;
-            Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.y, a.point.y));
-            for (int i = 0; i < pointRanks.length; i++)
-                pointRanks[i].rank += i;
-            Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
-            bottomRight = pointRanks[0].point;
-
-            if (Config.VIEW_PROGRESS) {
-                Imgproc.circle(progress, topLeft, 10, new Scalar(0, 0, 255), 2);
-                Imgproc.circle(progress, topRight, 10, new Scalar(0, 0, 255), 2);
-                Imgproc.circle(progress, bottomLeft, 10, new Scalar(0, 0, 255), 2);
-                Imgproc.circle(progress, bottomRight, 10, new Scalar(0, 0, 255), 2);
-            }
-
-            return new Point[]{topLeft, topRight, bottomLeft, bottomRight};
-        } catch (Exception e) {
-            return null;
-        }
-    }
-}
 
 class SudokuContourFinder {
     MatOfPoint find(Mat progress, Mat proc) {
@@ -285,16 +200,16 @@ public class ArSudokuSolver {
     private SudokuContourFinder sudokuContourFinder;
     private SudokuArrayConverter sudokuArrayConverter;
     private ConvexHullToContourConverter convexHullToContourConverter;
-    private SudokuCornerExtractor sudokuCornerExtractor;
-    private SudokuAlgorithmSolver sudokuAlgorithmSolver;
+    private CornerExtractor sudokuCornerExtractor;
+    private AlgorithmSolver sudokuAlgorithmSolver;
     private ExecutorService executorService;
 
     ArSudokuSolver() {
         sudokuContourFinder = new SudokuContourFinder();
         sudokuArrayConverter = new SudokuArrayConverter();
         convexHullToContourConverter = new ConvexHullToContourConverter();
-        sudokuCornerExtractor = new SudokuCornerExtractor();
-        sudokuAlgorithmSolver = new SudokuAlgorithmSolver();
+        sudokuCornerExtractor = new CornerExtractor();
+        sudokuAlgorithmSolver = new AlgorithmSolver();
         executorService = Executors.newSingleThreadExecutor();
     }
 

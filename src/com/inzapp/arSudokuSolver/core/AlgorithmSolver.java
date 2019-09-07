@@ -5,7 +5,7 @@ import com.inzapp.arSudokuSolver.config.Config;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SudokuAlgorithmSolver {
+public class AlgorithmSolver {
     private static class Node {
         int x;
         int y;
