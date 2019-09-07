@@ -18,7 +18,7 @@ public class ArSudokuSolver {
     /**
      * default constructor
      */
-    ArSudokuSolver() {
+    private ArSudokuSolver() {
         this.sudokuContourFinder = new SudokuContourFinder();
         this.sudokuArrayConverter = new SudokuArrayConverter();
         this.convexHullToContourConverter = new ConvexHullToContourConverter();
@@ -73,6 +73,8 @@ public class ArSudokuSolver {
         MatOfPoint sudokuContour = this.sudokuContourFinder.find(progress, proc);
         MatOfPoint hullPoints = this.convexHullToContourConverter.convert(progress, sudokuContour);
         Point[] corners = this.sudokuCornerExtractor.extract(sudokuContour, progress);
+
+        View.pureResult = pureResult;
         Mat[] perspectiveTransformers = this.sudokuArrayConverter.getPerspectiveTransformers(corners, proc);
         if (perspectiveTransformers == null)
             return;

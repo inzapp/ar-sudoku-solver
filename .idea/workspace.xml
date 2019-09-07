@@ -3,14 +3,15 @@
   <component name="ChangeListManager">
     <list default="true" id="060a236c-8d3e-4b84-8d19-6f13e46a3428" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/ArSudokuSolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/ArSudokuSolver.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/AlgorithmSolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/SudokuAlgorithmSolver.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/ConvexHullToContourConverter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/ConvexHullToContourConverter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/SudokuAnswerRenderer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/SudokuAnswerRenderer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/SudokuArrayConverter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/SudokuArrayConverter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/SudokuContourFinder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/SudokuContourFinder.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/SudokuCornerExtractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/core/SudokuCornerExtractor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/util/View.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/util/View.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/ArSudokuSolver.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/ArSudokuSolver.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/core/AlgorithmSolver$Node.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/core/AlgorithmSolver.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/core/ConvexHullToContourConverter.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/core/ConvexHullToContourConverter.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/core/SudokuAnswerRenderer.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/core/SudokuAnswerRenderer.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/core/SudokuArrayConverter.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/core/SudokuArrayConverter.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/core/SudokuContourFinder.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/core/SudokuContourFinder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/core/SudokuCornerExtractor.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/core/SudokuCornerExtractor.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/util/View.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/util/View.class" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
