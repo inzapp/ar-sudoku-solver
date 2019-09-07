@@ -2,16 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="060a236c-8d3e-4b84-8d19-6f13e46a3428" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/img/detection_sudoku_area.gif" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/img/extract_train_data.gif" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/img/preview.gif" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/img/preview_tilt.gif" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/img/transformed.gif" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/ArSudokuSolver.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/ArSudokuSolver.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/config/Config.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ar-sudoku-solver/com/inzapp/arSudokuSolver/config/Config.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/ArSudokuSolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/ArSudokuSolver.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/config/Config.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/inzapp/arSudokuSolver/config/Config.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
