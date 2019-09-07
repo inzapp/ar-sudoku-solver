@@ -9,9 +9,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class AlgorithmSolver {
+public class SudokuAlgorithmSolver {
     /**
-     *
+     * inner class of calculating sudoku answer
      */
     private static class Node {
         int x;
@@ -29,16 +29,19 @@ public class AlgorithmSolver {
     private boolean[][] checkBox;
 
     /**
-     *
+     * default constructor
      */
-    public AlgorithmSolver() {
+    public SudokuAlgorithmSolver() {
         this.executorService = Executors.newSingleThreadExecutor();
     }
 
     /**
-     * @param unsolvedSudoku
-     * @param timeout
-     * @return
+     * solve sudoku in specified time
+     *
+     * @param unsolvedSudoku unsolved sudoku array
+     * @param timeout        time limitation of solving
+     * @return solved sudoku
+     * return null if not solved in time
      */
     public int[][] solveInTime(int[][] unsolvedSudoku, long timeout) {
         try {
@@ -50,11 +53,14 @@ public class AlgorithmSolver {
     }
 
     /**
-     * @param sudoku
-     * @param cnt
-     * @param nodes
-     * @param idx
-     * @return
+     * solve sudoku array use backtracking brute force method
+     *
+     * @param sudoku sudoku array
+     * @param cnt    count value for exit condition
+     * @param nodes  node list of including x, y point
+     * @param idx    index value of recursion
+     * @return solved sudoku array
+     * return null if sudoku is not possible
      */
     private int[][] solve(int[][] sudoku, int cnt, List<Node> nodes, int idx) {
         if (cnt <= idx) {
@@ -96,8 +102,11 @@ public class AlgorithmSolver {
     }
 
     /**
-     * @param sudoku
-     * @return
+     * solve sudoku with 2 dimension array
+     *
+     * @param sudoku unsolved sudoku array
+     * @return solved sudoku array
+     * return null if sudoku is not possible
      */
     private int[][] getAnswer2d(int[][] sudoku) {
         int cnt = 0;

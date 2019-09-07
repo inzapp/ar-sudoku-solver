@@ -67,7 +67,9 @@ public class SudokuCornerExtractor {
     }
 
     /**
-     * @param pointRanks
+     * reset point ranks to zero
+     *
+     * @param pointRanks point rank array
      */
     private void resetPointRanks(PointRank[] pointRanks) {
         for (int i = 0; i < pointRanks.length; i++)
@@ -75,8 +77,10 @@ public class SudokuCornerExtractor {
     }
 
     /**
-     * @param pointRanks
-     * @return
+     * calculate top left point of sudoku contour
+     *
+     * @param pointRanks point rank array
+     * @return left top point of contour
      */
     private Point getTopLeft(PointRank[] pointRanks) {
         Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.y));
@@ -91,8 +95,10 @@ public class SudokuCornerExtractor {
     }
 
     /**
-     * @param pointRanks
-     * @return
+     * calculate top right point of sudoku contour
+     *
+     * @param pointRanks point rank array
+     * @return right top point of contour
      */
     private Point getTopRight(PointRank[] pointRanks) {
         Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.x, a.point.x));
@@ -107,8 +113,10 @@ public class SudokuCornerExtractor {
     }
 
     /**
-     * @param pointRanks
-     * @return
+     * calculate bottom left point of sudoku contour
+     *
+     * @param pointRanks point rank array
+     * @return bottom left point of contour
      */
     private Point getBottomLeft(PointRank[] pointRanks) {
         Arrays.sort(pointRanks, Comparator.comparingDouble(a -> a.point.x));
@@ -123,8 +131,10 @@ public class SudokuCornerExtractor {
     }
 
     /**
-     * @param pointRanks
-     * @return
+     * calculate bottom right point of sudoku contour
+     *
+     * @param pointRanks point rank array
+     * @return bottom right point of contour
      */
     private Point getBottomRight(PointRank[] pointRanks) {
         Arrays.sort(pointRanks, (a, b) -> Double.compare(b.point.x, a.point.x));

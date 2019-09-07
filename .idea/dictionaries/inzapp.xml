@@ -2,6 +2,7 @@
   <dictionary name="inzapp">
     <words>
       <w>cccsudoku</w>
+      <w>hough</w>
       <w>imshow</w>
       <w>mnist</w>
       <w>sava</w>

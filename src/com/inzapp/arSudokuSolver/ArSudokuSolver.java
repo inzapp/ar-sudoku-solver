@@ -12,15 +12,18 @@ public class ArSudokuSolver {
     private SudokuArrayConverter sudokuArrayConverter;
     private ConvexHullToContourConverter convexHullToContourConverter;
     private SudokuCornerExtractor sudokuCornerExtractor;
-    private AlgorithmSolver sudokuAlgorithmSolver;
+    private SudokuAlgorithmSolver sudokuAlgorithmSolver;
     private SudokuAnswerRenderer sudokuAnswerRenderer;
 
+    /**
+     * default constructor
+     */
     ArSudokuSolver() {
         this.sudokuContourFinder = new SudokuContourFinder();
         this.sudokuArrayConverter = new SudokuArrayConverter();
         this.convexHullToContourConverter = new ConvexHullToContourConverter();
         this.sudokuCornerExtractor = new SudokuCornerExtractor();
-        this.sudokuAlgorithmSolver = new AlgorithmSolver();
+        this.sudokuAlgorithmSolver = new SudokuAlgorithmSolver();
         this.sudokuAnswerRenderer = new SudokuAnswerRenderer();
     }
 
@@ -29,7 +32,9 @@ public class ArSudokuSolver {
     }
 
     /**
-     * @param args
+     * entry point
+     *
+     * @param args not used
      */
     public static void main(String[] args) {
         final int skipFrameCnt = 7;
@@ -55,8 +60,9 @@ public class ArSudokuSolver {
     }
 
     /**
-     * @param raw
-     * @return
+     * get frame from sudoku video and render answer
+     *
+     * @param raw each frame of video
      */
     private void render(Mat raw) {
         Mat pureResult = raw.clone();
@@ -68,14 +74,14 @@ public class ArSudokuSolver {
         MatOfPoint hullPoints = this.convexHullToContourConverter.convert(progress, sudokuContour);
         Point[] corners = this.sudokuCornerExtractor.extract(sudokuContour, progress);
         Mat[] perspectiveTransformers = this.sudokuArrayConverter.getPerspectiveTransformers(corners, proc);
-        if(perspectiveTransformers == null)
+        if (perspectiveTransformers == null)
             return;
 
         Mat perspectiveTransformer = perspectiveTransformers[0];
         Mat inverseTransformer = perspectiveTransformers[1];
         int[][] unsolvedSudoku = this.sudokuArrayConverter.convert(perspectiveTransformer, proc);
         int[][] solvedSudoku = this.sudokuAlgorithmSolver.solveInTime(unsolvedSudoku, 100);
-        if(solvedSudoku == null)
+        if (solvedSudoku == null)
             return;
 
         this.sudokuAnswerRenderer.renderAnswer(raw, perspectiveTransformer, unsolvedSudoku, solvedSudoku, inverseTransformer, pureResult);
@@ -83,6 +89,11 @@ public class ArSudokuSolver {
         View.progress = progress;
     }
 
+    /**
+     * pre processing of processing
+     *
+     * @param proc mat for processing
+     */
     private void preProcess(Mat proc) {
         // pre processing
         Imgproc.cvtColor(proc, proc, Imgproc.COLOR_BGR2GRAY);
@@ -91,6 +102,12 @@ public class ArSudokuSolver {
         Core.bitwise_not(proc, proc);
     }
 
+    /**
+     * draw line of hough transformed frame
+     *
+     * @param progress mat for viewing progress
+     * @param proc     mat for processing
+     */
     private void drawLine(Mat progress, Mat proc) {
         // detect line
         if (Config.VIEW_PROGRESS) {

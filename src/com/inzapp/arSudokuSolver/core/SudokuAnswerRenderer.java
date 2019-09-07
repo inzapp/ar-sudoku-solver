@@ -10,12 +10,13 @@ import org.opencv.imgproc.Imgproc;
 
 public class SudokuAnswerRenderer {
     /**
+     * render answer to raw sudoku frame
      *
-     * @param raw
-     * @param perspectiveTransformer
-     * @param unsolvedSudoku
-     * @param solvedSudoku
-     * @param inverseTransformer
+     * @param raw                    for render to raw frame
+     * @param perspectiveTransformer for rendering correspondingly if Sudoku contour is tilted
+     * @param unsolvedSudoku         unsolved sudoku array from com.inzapp.arSudokuSolver.core.SudokuArrayConverter.convert();
+     * @param solvedSudoku           solved sudoku array from com.inzapp.arSudokuSolver.core.SudokuAlgorithmSolver.solve();
+     * @param inverseTransformer     inverse matrix of perspectiveTransformer for restoring to original shape
      * @param pureResult
      */
     public void renderAnswer(Mat raw, Mat perspectiveTransformer, int[][] unsolvedSudoku, int[][] solvedSudoku, Mat inverseTransformer, Mat pureResult) {
@@ -40,11 +41,11 @@ public class SudokuAnswerRenderer {
     }
 
     /**
-     * render perspective to answer text
+     * render flatted sudoku area to answer number with putText()
      *
-     * @param perspective
-     * @param unsolvedSudoku
-     * @param solvedSudoku
+     * @param perspective    flatted sudoku area image of tilted image
+     * @param unsolvedSudoku unsolved sudoku array for not render values that already exist in unsolved sudoku
+     * @param solvedSudoku   solved sudoku array for render valued that not exist in unsolved sudoku
      */
     private void renderToPerspective(Mat perspective, int[][] unsolvedSudoku, int[][] solvedSudoku) {
         int rowOffset = perspective.rows() / 9;
@@ -61,10 +62,11 @@ public class SudokuAnswerRenderer {
     }
 
     /**
+     * overlay rendered sudoku area image to raw frame image
      *
-     * @param raw
-     * @param originalPerspective
-     * @param pureResult
+     * @param raw                 raw frame image
+     * @param originalPerspective rendered sudoku area image that restored to original shape
+     * @param pureResult          pure result image for viewing result
      */
     private void overlay(Mat raw, Mat originalPerspective, Mat pureResult) {
         for (int row = 0; row < raw.rows(); ++row) {

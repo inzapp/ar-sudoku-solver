@@ -10,9 +10,11 @@ import java.util.List;
 
 public class SudokuContourFinder {
     /**
-     * @param progress
-     * @param proc
-     * @return
+     * find contour of sudoku area using findContours() method
+     *
+     * @param progress mat for viewing progress
+     * @param proc     processed image
+     * @return contour of sudoku area
      */
     public MatOfPoint find(Mat progress, Mat proc) {
         // find contours
@@ -60,19 +62,21 @@ public class SudokuContourFinder {
     }
 
     /**
-     * @param a
-     * @param b
-     * @return
+     * calculate the Euclidean distance from the two points
+     *
+     * @param a point 1
+     * @param b another point
+     * @return Euclidean distance of point a and b
      */
     private double getDistance(Point a, Point b) {
         return Core.norm(new MatOfPoint(a), new MatOfPoint(b));
     }
 
     /**
-     * calculate center of sudoku contour using moment
+     * calculate center point of contour using moments
      *
-     * @param sudokuContour
-     * @return
+     * @param sudokuContour sudoku contour
+     * @return center point of contour
      */
     private Point getCenterPoint(MatOfPoint sudokuContour) {
         Moments moments = Imgproc.moments(sudokuContour, false);

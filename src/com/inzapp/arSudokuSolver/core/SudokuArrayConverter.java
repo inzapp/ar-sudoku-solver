@@ -11,16 +11,19 @@ public class SudokuArrayConverter {
     private StatModel model;
 
     /**
-     *
+     * default constructor
+     * load mlp model from file system
      */
     public SudokuArrayConverter() {
         model = ANN_MLP.load("model.xml");
     }
 
     /**
-     * @param perspectiveTransformer
-     * @param proc
-     * @return
+     * extract sudoku value array from cropped sudoku area image using pre-trained neural network's prediction
+     *
+     * @param perspectiveTransformer to convert as if to see from the front
+     * @param proc                   cropped sudoku area image
+     * @return extracted unsolved sudoku value array
      */
     public int[][] convert(Mat perspectiveTransformer, Mat proc) {
         // perspective transform with processing sudoku contour
@@ -54,9 +57,10 @@ public class SudokuArrayConverter {
     /**
      * calculate perspective transformer
      *
-     * @param corners
-     * @param proc
-     * @return
+     * @param corners four corners of extracted sudoku contour from com.inzapp.arSudokuSolver.core.SudokuContourFinder.find();
+     * @param proc    processed image
+     * @return [0] : conversion matrix, as you can see from the front
+     * [1] : conversion matrix, restore to original shape
      */
     public Mat[] getPerspectiveTransformers(Point[] corners, Mat proc) {
         try {
@@ -72,9 +76,9 @@ public class SudokuArrayConverter {
     }
 
     /**
-     * @param proc
-     * @param splitSize
-     * @return
+     * @param proc      transformed sudoku area image
+     * @param splitSize length of one side of the image to be split
+     * @return 9 * 9 divided image
      */
     private Mat[][] split(Mat proc, int splitSize) {
         // resize to (28 * 9) * (28 * 9) : 28 is column of train data

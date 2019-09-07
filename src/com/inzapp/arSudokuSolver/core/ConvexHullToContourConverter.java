@@ -9,9 +9,11 @@ import java.util.List;
 
 public class ConvexHullToContourConverter {
     /**
-     * @param progress
-     * @param sudokuContour
-     * @return
+     * convert convex hull to contour (MatOfPoint)
+     *
+     * @param progress      mat for viewing progress
+     * @param sudokuContour extracted sudoku contour from com.inzapp.arSudokuSolver.core.SudokuContourFinder.find()
+     * @return converted contour
      */
     public MatOfPoint convert(Mat progress, MatOfPoint sudokuContour) {
         if (!Config.VIEW_PROGRESS)

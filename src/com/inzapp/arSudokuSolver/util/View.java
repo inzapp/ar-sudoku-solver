@@ -14,6 +14,9 @@ public class View {
     public static Mat transform;
     public static Mat[][] elements = new Mat[9][9];
 
+    /**
+     * initialize view reference to zero mat
+     */
     public static void init() {
         if (Config.VIEW_PROGRESS) {
             pureResult = Mat.zeros(new Size(854, 480), CvType.CV_8UC3);
@@ -27,6 +30,11 @@ public class View {
         }
     }
 
+    /**
+     * shows the values stored in the static reference at once
+     *
+     * @param fps specified frame per second
+     */
     public static void show(int fps) {
         imshow("cam", pureResult, 0, 0);
         if (Config.VIEW_PROGRESS) {
@@ -46,6 +54,14 @@ public class View {
         HighGui.waitKey(fps);
     }
 
+    /**
+     * custom imshow function to use instead of HighGui.imshow()
+     *
+     * @param windowName window name of image
+     * @param img        image of mat type
+     * @param x          x coordinate of image window
+     * @param y          y coordinate of image window
+     */
     private static void imshow(String windowName, Mat img, int x, int y) {
         HighGui.namedWindow(windowName, HighGui.WINDOW_AUTOSIZE);
         HighGui.moveWindow(windowName, x, y);
