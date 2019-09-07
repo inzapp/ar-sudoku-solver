@@ -1,3 +1,7 @@
+package com.inzapp.arSudokuSolver;
+
+import com.inzapp.arSudokuSolver.config.Config;
+import com.inzapp.arSudokuSolver.util.View;
 import org.opencv.core.*;
 import org.opencv.highgui.HighGui;
 import org.opencv.imgproc.Imgproc;
@@ -15,61 +19,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-class pRes {
-    static boolean VIEW_PROGRESS = true;
-    static int VIEW_MODE = View.VIEW_MODE_PROGRESS;
-}
-
-class View {
-    static final int VIEW_MODE_PROGRESS = 1;
-    static final int VIEW_MODE_ELEMENTS = 2;
-
-    static Mat pureResult;
-    static Mat progress;
-    static Mat sudokuArea;
-    static Mat transform;
-    static Mat[][] elements = new Mat[9][9];
-
-    static void init() {
-        if(pRes.VIEW_PROGRESS) {
-            pureResult = Mat.zeros(new Size(854, 480), CvType.CV_8UC3);
-            progress = Mat.zeros(new Size(854, 480), CvType.CV_8UC3);
-            sudokuArea = Mat.zeros(new Size(854, 480), CvType.CV_8UC1);
-            transform = Mat.zeros(new Size(28 * 15, 28 * 15), CvType.CV_8UC1);
-            for (int i = 0; i < elements.length; ++i) {
-                for (int j = 0; j < elements[i].length; ++j)
-                    elements[i][j] = Mat.zeros(new Size(28 * 15 / 9, 28 * 15 / 9), CvType.CV_8UC1);
-            }
-        }
-    }
-
-    static void show(int fps) {
-        imshow("cam", pureResult, 0, 0);
-        if (pRes.VIEW_PROGRESS) {
-            if(pRes.VIEW_MODE == VIEW_MODE_PROGRESS) {
-                imshow("progress", progress, 870, 0);
-                imshow("sudoku_area", sudokuArea, 0, 525);
-                imshow("transform", transform, 870, 525);
-            }
-            else if(pRes.VIEW_MODE == VIEW_MODE_ELEMENTS) {
-                imshow("transform", transform, 435, 525);
-                int offset = 110;
-                for (int i = 0; i < elements.length; ++i) {
-                    for (int j = 0; j < elements[i].length; ++j) {
-                        imshow("e" + i + j, elements[i][j], 880 - offset + (j * offset + offset),  (i * offset + offset) - offset);
-                    }
-                }
-            }
-        }
-        HighGui.waitKey(fps);
-    }
-
-    private static void imshow(String windowName, Mat img, int x, int y) {
-        HighGui.namedWindow(windowName, HighGui.WINDOW_AUTOSIZE);
-        HighGui.moveWindow(windowName, x, y);
-        HighGui.imshow(windowName, img);
-    }
-}
 
 class SudokuAlgorithmSolver {
     private static class Node {
@@ -88,7 +37,7 @@ class SudokuAlgorithmSolver {
 
     private int[][] solve(int[][] sudoku, int cnt, List<Node> nodes, int idx) {
         if (cnt <= idx) {
-            if (pRes.VIEW_PROGRESS) {
+            if (Config.VIEW_PROGRESS) {
                 for (int[] row : sudoku) {
                     for (int cur : row)
                         System.out.print(cur + " ");
@@ -225,7 +174,7 @@ class SudokuCornerExtractor {
             Arrays.sort(pointRanks, Comparator.comparingInt(a -> a.rank));
             bottomRight = pointRanks[0].point;
 
-            if (pRes.VIEW_PROGRESS) {
+            if (Config.VIEW_PROGRESS) {
                 Imgproc.circle(progress, topLeft, 10, new Scalar(0, 0, 255), 2);
                 Imgproc.circle(progress, topRight, 10, new Scalar(0, 0, 255), 2);
                 Imgproc.circle(progress, bottomLeft, 10, new Scalar(0, 0, 255), 2);
@@ -282,7 +231,7 @@ class SudokuContourFinder {
 
         Point contourCenter = getCenterPoint(sudokuContour);
 
-        if (pRes.VIEW_PROGRESS) {
+        if (Config.VIEW_PROGRESS) {
             Imgproc.circle(progress, contourCenter, 10, new Scalar(0, 0, 255), -1);
             Imgproc.circle(progress, frameCenter, 10, new Scalar(255, 0, 0), -1);
         }
@@ -305,7 +254,7 @@ class SudokuContourFinder {
 
 class ConvexHullToContourConverter {
     MatOfPoint convert(Mat progress, MatOfPoint sudokuContour) {
-        if(!pRes.VIEW_PROGRESS)
+        if(!Config.VIEW_PROGRESS)
             return null;
 
         try {
@@ -360,7 +309,7 @@ class SudokuArrayConverter {
         }
 
         // print unsolved sudoku
-        if (pRes.VIEW_PROGRESS) {
+        if (Config.VIEW_PROGRESS) {
             for (int[] row : unsolvedSudoku) {
                 for (int cur : row)
                     System.out.print(cur + " ");
@@ -384,7 +333,7 @@ class SudokuArrayConverter {
 
     private Mat[][] split(Mat proc, int splitSize) {
         // resize to (28 * 9) * (28 * 9) : 28 is column of train data
-        if (pRes.VIEW_PROGRESS) {
+        if (Config.VIEW_PROGRESS) {
             Mat transform = new Mat();
             Imgproc.resize(proc, transform, new Size(splitSize * 15, splitSize * 15));
             View.transform = transform;
@@ -401,7 +350,7 @@ class SudokuArrayConverter {
                         colRange(j * offset, j * offset + offset);
         }
 
-        if (pRes.VIEW_PROGRESS) {
+        if (Config.VIEW_PROGRESS) {
             for (int i = 0; i < elements.length; ++i) {
                 for (int j = 0; j < elements[i].length; ++j) {
                     Mat elementView = new Mat();
@@ -509,7 +458,7 @@ public class ArSudokuSolver {
             Mat originalPerspective = new Mat();
             Imgproc.warpPerspective(perspective, originalPerspective, inverseTransformer, raw.size());
 
-            if (pRes.VIEW_PROGRESS) {
+            if (Config.VIEW_PROGRESS) {
                 View.sudokuArea = originalPerspective.clone();
             }
 
@@ -542,7 +491,7 @@ public class ArSudokuSolver {
 
     private void drawLine(Mat progress, Mat proc) {
         // detect line
-        if (pRes.VIEW_PROGRESS) {
+        if (Config.VIEW_PROGRESS) {
             Mat canny = proc.clone();
             Imgproc.Canny(canny, canny, 100, 100);
             Mat lines = new Mat();
