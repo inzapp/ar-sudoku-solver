@@ -9,13 +9,12 @@ import java.util.List;
 
 public class ConvexHullToContourConverter {
     /**
-     *
      * @param progress
      * @param sudokuContour
      * @return
      */
     public MatOfPoint convert(Mat progress, MatOfPoint sudokuContour) {
-        if(!Config.VIEW_PROGRESS)
+        if (!Config.VIEW_PROGRESS)
             return null;
 
         try {

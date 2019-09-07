@@ -15,7 +15,7 @@ public class View {
     public static Mat[][] elements = new Mat[9][9];
 
     public static void init() {
-        if(Config.VIEW_PROGRESS) {
+        if (Config.VIEW_PROGRESS) {
             pureResult = Mat.zeros(new Size(854, 480), CvType.CV_8UC3);
             progress = Mat.zeros(new Size(854, 480), CvType.CV_8UC3);
             sudokuArea = Mat.zeros(new Size(854, 480), CvType.CV_8UC1);
@@ -30,18 +30,16 @@ public class View {
     public static void show(int fps) {
         imshow("cam", pureResult, 0, 0);
         if (Config.VIEW_PROGRESS) {
-            if(Config.VIEW_MODE == ViewMode.VIEW_MODE_PROGRESS) {
+            if (Config.VIEW_MODE == ViewMode.VIEW_MODE_PROGRESS) {
                 imshow("progress", progress, 870, 0);
                 imshow("sudoku_area", sudokuArea, 0, 525);
                 imshow("transform", transform, 870, 525);
-            }
-            else if(Config.VIEW_MODE == ViewMode.VIEW_MODE_ELEMENTS) {
+            } else if (Config.VIEW_MODE == ViewMode.VIEW_MODE_ELEMENTS) {
                 imshow("transform", transform, 435, 525);
                 int offset = 110;
                 for (int i = 0; i < elements.length; ++i) {
-                    for (int j = 0; j < elements[i].length; ++j) {
-                        imshow("e" + i + j, elements[i][j], 880 - offset + (j * offset + offset),  (i * offset + offset) - offset);
-                    }
+                    for (int j = 0; j < elements[i].length; ++j)
+                        imshow("e" + i + j, elements[i][j], 880 - offset + (j * offset + offset), (i * offset + offset) - offset);
                 }
             }
         }

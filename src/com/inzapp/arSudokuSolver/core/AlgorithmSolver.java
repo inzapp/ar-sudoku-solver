@@ -4,6 +4,10 @@ import com.inzapp.arSudokuSolver.config.Config;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class AlgorithmSolver {
     /**
@@ -19,12 +23,33 @@ public class AlgorithmSolver {
         }
     }
 
+    private ExecutorService executorService;
     private boolean[][] checkCol;
     private boolean[][] checkRow;
     private boolean[][] checkBox;
 
     /**
      *
+     */
+    public AlgorithmSolver() {
+        this.executorService = Executors.newSingleThreadExecutor();
+    }
+
+    /**
+     * @param unsolvedSudoku
+     * @param timeout
+     * @return
+     */
+    public int[][] solveInTime(int[][] unsolvedSudoku, long timeout) {
+        try {
+            Callable<int[][]> callable = () -> getAnswer2d(unsolvedSudoku);
+            return executorService.submit(callable).get(timeout, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
      * @param sudoku
      * @param cnt
      * @param nodes
@@ -71,11 +96,10 @@ public class AlgorithmSolver {
     }
 
     /**
-     *
      * @param sudoku
      * @return
      */
-    public int[][] getAnswer2d(int[][] sudoku) {
+    private int[][] getAnswer2d(int[][] sudoku) {
         int cnt = 0;
         List<Node> nodes = new ArrayList<>();
         this.checkBox = new boolean[9][10];

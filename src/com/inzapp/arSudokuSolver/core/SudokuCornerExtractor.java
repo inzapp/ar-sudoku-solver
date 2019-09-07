@@ -26,6 +26,7 @@ public class SudokuCornerExtractor {
     /**
      * find 4 corner of sudoku contour to perspective transform
      * copy points to point rank and sort
+     *
      * @param sudokuContour
      * @param progress
      * @return
@@ -59,7 +60,6 @@ public class SudokuCornerExtractor {
                 Imgproc.circle(progress, bottomLeft, 10, new Scalar(0, 0, 255), 2);
                 Imgproc.circle(progress, bottomRight, 10, new Scalar(0, 0, 255), 2);
             }
-
             return new Point[]{topLeft, topRight, bottomLeft, bottomRight};
         } catch (Exception e) {
             return null;
@@ -67,7 +67,6 @@ public class SudokuCornerExtractor {
     }
 
     /**
-     *
      * @param pointRanks
      */
     private void resetPointRanks(PointRank[] pointRanks) {
@@ -76,7 +75,6 @@ public class SudokuCornerExtractor {
     }
 
     /**
-     *
      * @param pointRanks
      * @return
      */
@@ -93,7 +91,6 @@ public class SudokuCornerExtractor {
     }
 
     /**
-     *
      * @param pointRanks
      * @return
      */
@@ -110,7 +107,6 @@ public class SudokuCornerExtractor {
     }
 
     /**
-     *
      * @param pointRanks
      * @return
      */
@@ -127,7 +123,6 @@ public class SudokuCornerExtractor {
     }
 
     /**
-     *
      * @param pointRanks
      * @return
      */

@@ -5,17 +5,7 @@ import com.inzapp.arSudokuSolver.core.*;
 import com.inzapp.arSudokuSolver.util.View;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.imgproc.Moments;
-import org.opencv.ml.ANN_MLP;
-import org.opencv.ml.StatModel;
 import org.opencv.videoio.VideoCapture;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class ArSudokuSolver {
     private SudokuContourFinder sudokuContourFinder;
@@ -23,21 +13,24 @@ public class ArSudokuSolver {
     private ConvexHullToContourConverter convexHullToContourConverter;
     private SudokuCornerExtractor sudokuCornerExtractor;
     private AlgorithmSolver sudokuAlgorithmSolver;
-    private ExecutorService executorService;
+    private SudokuAnswerRenderer sudokuAnswerRenderer;
 
     ArSudokuSolver() {
-        sudokuContourFinder = new SudokuContourFinder();
-        sudokuArrayConverter = new SudokuArrayConverter();
-        convexHullToContourConverter = new ConvexHullToContourConverter();
-        sudokuCornerExtractor = new SudokuCornerExtractor();
-        sudokuAlgorithmSolver = new AlgorithmSolver();
-        executorService = Executors.newSingleThreadExecutor();
+        this.sudokuContourFinder = new SudokuContourFinder();
+        this.sudokuArrayConverter = new SudokuArrayConverter();
+        this.convexHullToContourConverter = new ConvexHullToContourConverter();
+        this.sudokuCornerExtractor = new SudokuCornerExtractor();
+        this.sudokuAlgorithmSolver = new AlgorithmSolver();
+        this.sudokuAnswerRenderer = new SudokuAnswerRenderer();
     }
 
     static {
         System.load("C:\\inz\\lib\\opencv_java411.dll");
     }
 
+    /**
+     * @param args
+     */
     public static void main(String[] args) {
         final int skipFrameCnt = 7;
         int cnt = 0;
@@ -61,79 +54,33 @@ public class ArSudokuSolver {
         System.exit(0);
     }
 
-    private Mat render(Mat raw) {
+    /**
+     * @param raw
+     * @return
+     */
+    private void render(Mat raw) {
         Mat pureResult = raw.clone();
         Mat progress = raw.clone();
         Mat proc = raw.clone();
-        try {
-            preProcess(proc);
+        preProcess(proc);
+        drawLine(progress, proc);
+        MatOfPoint sudokuContour = this.sudokuContourFinder.find(progress, proc);
+        MatOfPoint hullPoints = this.convexHullToContourConverter.convert(progress, sudokuContour);
+        Point[] corners = this.sudokuCornerExtractor.extract(sudokuContour, progress);
+        Mat[] perspectiveTransformers = this.sudokuArrayConverter.getPerspectiveTransformers(corners, proc);
+        if(perspectiveTransformers == null)
+            return;
 
-            drawLine(progress, proc);
+        Mat perspectiveTransformer = perspectiveTransformers[0];
+        Mat inverseTransformer = perspectiveTransformers[1];
+        int[][] unsolvedSudoku = this.sudokuArrayConverter.convert(perspectiveTransformer, proc);
+        int[][] solvedSudoku = this.sudokuAlgorithmSolver.solveInTime(unsolvedSudoku, 100);
+        if(solvedSudoku == null)
+            return;
 
-            MatOfPoint sudokuContour = sudokuContourFinder.find(progress, proc);
-
-            MatOfPoint hullPoints = convexHullToContourConverter.convert(progress, sudokuContour);
-
-            Point[] corners = sudokuCornerExtractor.extract(sudokuContour, progress);
-
-            Mat[] perspectiveTransformers = sudokuArrayConverter.getPerspectiveTransformers(corners, proc);
-
-            Mat perspectiveTransformer = perspectiveTransformers[0];
-
-            Mat inverseTransformer = perspectiveTransformers[1];
-
-            int[][] unsolvedSudoku = sudokuArrayConverter.convert(perspectiveTransformer, proc);
-
-            // calculate sudoku answer
-            Callable<int[][]> callable = () -> sudokuAlgorithmSolver.getAnswer2d(unsolvedSudoku);
-            int[][] solvedSudoku = executorService.submit(callable).get(100, TimeUnit.MILLISECONDS);// get perspective transformation of raw sudoku area
-            Mat perspective = new Mat();
-            Imgproc.warpPerspective(raw, perspective, perspectiveTransformer, raw.size());
-
-            // resize 1 : 1 rectangle shape
-            int smaller = Math.min(raw.rows(), raw.cols());
-            Imgproc.resize(perspective, perspective, new Size(smaller, smaller));
-
-            // render perspective to answer text
-            int rowOffset = perspective.rows() / 9;
-            int colOffset = perspective.cols() / 9;
-            for (int i = 0; i < 9; ++i) {
-                for (int j = 0; j < 9; ++j) {
-                    if (unsolvedSudoku[i][j] == 0)
-                        Imgproc.putText(perspective,
-                                String.valueOf(solvedSudoku[i][j]),
-                                new Point(j * colOffset + 16, i * rowOffset + 39),
-                                Imgproc.FONT_HERSHEY_SIMPLEX, 1.3, new Scalar(0, 0, 255), 3);
-                }
-            }
-
-            Imgproc.resize(perspective, perspective, raw.size());
-
-            // get inverse transform
-            Mat originalPerspective = new Mat();
-            Imgproc.warpPerspective(perspective, originalPerspective, inverseTransformer, raw.size());
-
-            if (Config.VIEW_PROGRESS) {
-                View.sudokuArea = originalPerspective.clone();
-            }
-
-            // overlay
-            for (int row = 0; row < raw.rows(); ++row) {
-                for (int col = 0; col < raw.cols(); ++col) {
-                    if (originalPerspective.get(row, col)[0] == 0 &&
-                            originalPerspective.get(row, col)[1] == 0 &&
-                            originalPerspective.get(row, col)[2] == 0)
-                        continue;
-
-                    pureResult.put(row, col, originalPerspective.get(row, col));
-                }
-            }
-        } catch (Exception e) {
-        }
-
+        this.sudokuAnswerRenderer.renderAnswer(raw, perspectiveTransformer, unsolvedSudoku, solvedSudoku, inverseTransformer, pureResult);
         View.pureResult = pureResult;
         View.progress = progress;
-        return raw;
     }
 
     private void preProcess(Mat proc) {

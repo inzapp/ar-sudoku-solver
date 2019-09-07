@@ -10,7 +10,6 @@ import java.util.List;
 
 public class SudokuContourFinder {
     /**
-     *
      * @param progress
      * @param proc
      * @return
@@ -45,11 +44,6 @@ public class SudokuContourFinder {
             if (100 < distanceFromCenter)
                 continue;
 
-            // filter : h/w ratio
-//            double ratio = rect.height / (double) rect.width;
-//            if (ratio < 0.5 || 1.5 < ratio)
-//                continue;
-
             // save
             maxArea = rect.area();
             sudokuContour = contour;
@@ -66,7 +60,6 @@ public class SudokuContourFinder {
     }
 
     /**
-     *
      * @param a
      * @param b
      * @return
