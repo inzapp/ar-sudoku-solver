@@ -10,7 +10,7 @@ import org.opencv.imgproc.Imgproc;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class CornerExtractor {
+public class SudokuCornerExtractor {
     /**
      * used for calculating 4 corner of sudoku contour
      */
@@ -127,7 +127,7 @@ public class CornerExtractor {
     }
 
     /**
-     * 
+     *
      * @param pointRanks
      * @return
      */

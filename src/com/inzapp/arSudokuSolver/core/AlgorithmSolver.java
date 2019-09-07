@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AlgorithmSolver {
+    /**
+     *
+     */
     private static class Node {
         int x;
         int y;
@@ -20,6 +23,14 @@ public class AlgorithmSolver {
     private boolean[][] checkRow;
     private boolean[][] checkBox;
 
+    /**
+     *
+     * @param sudoku
+     * @param cnt
+     * @param nodes
+     * @param idx
+     * @return
+     */
     private int[][] solve(int[][] sudoku, int cnt, List<Node> nodes, int idx) {
         if (cnt <= idx) {
             if (Config.VIEW_PROGRESS) {
@@ -59,6 +70,11 @@ public class AlgorithmSolver {
         return null;
     }
 
+    /**
+     *
+     * @param sudoku
+     * @return
+     */
     public int[][] getAnswer2d(int[][] sudoku) {
         int cnt = 0;
         List<Node> nodes = new ArrayList<>();
