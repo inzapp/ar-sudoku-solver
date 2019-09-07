@@ -34,7 +34,7 @@ public class ArSudokuSolver {
     public static void main(String[] args) {
         final int skipFrameCnt = 7;
         int cnt = 0;
-        VideoCapture vc = new VideoCapture("C:\\inz\\numgigi.mp4");
+        VideoCapture vc = new VideoCapture("sample.mp4");
         ArSudokuSolver solver = new ArSudokuSolver();
         Mat frame = new Mat();
         View.init();
