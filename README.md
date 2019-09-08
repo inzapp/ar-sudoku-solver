@@ -12,6 +12,7 @@ https://www.youtube.com/watch?v=VdSDIDAaPeM
 ## Progress
 ### Detection Sudoku Area
 ![detection_sudoku_area](./img/detection_sudoku_area.gif)
+![detection_sudoku_area_tilt](./img/detection_sudoku_area_tilt.gif)
 
 ### Transform
 ![transformed](./img/transformed.gif)
